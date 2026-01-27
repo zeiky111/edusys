@@ -471,10 +471,6 @@ function checkAnswer() {
       zone.classList.add('correct');
       zone.classList.remove('incorrect');
       correctCount++;
-      // Find the points for this correct item
-      const itemObj = currentLevel.items.find(i => (i.text || i) === correctItem);
-      const points = itemObj && typeof itemObj === 'object' ? itemObj.points : 10;
-      earnedPoints += points;
     } else {
       zone.classList.add('incorrect');
       zone.classList.remove('correct');
@@ -483,13 +479,20 @@ function checkAnswer() {
 
   console.log(`Total correct: ${correctCount}/${currentLevel.correctOrder.length}`);
 
-  // Calculate total possible points
+  // Calculate total possible points for the level
   currentLevel.items.forEach(item => {
     const points = item && typeof item === 'object' ? item.points : 10;
     totalPoints += points;
   });
 
-  document.getElementById('score-display').textContent = `Puntos: ${earnedPoints}/${totalPoints}`;
+  // Award points only if ALL items are in correct positions
+  if (correctCount === currentLevel.correctOrder.length) {
+    earnedPoints = totalPoints; // Full points for perfect level completion
+    document.getElementById('score-display').textContent = `Puntos: ${earnedPoints}/${totalPoints}`;
+  } else {
+    earnedPoints = 0; // No points for incomplete/incorrect level
+    document.getElementById('score-display').textContent = `Puntos: 0/${totalPoints}`;
+  }
 
   if (correctCount === currentLevel.correctOrder.length) {
     console.log('🎉 All answers correct! Game/level completed.');
