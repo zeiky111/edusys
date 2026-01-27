@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<title>I-edit ang Knowledge Quest - Wikahusayan Quest</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/teacher.css">
+<style>
+.edit-quest-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+.question-list {
+  margin-top: 30px;
+}
+.question-item {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.question-item h3 {
+  margin-bottom: 10px;
+  color: #333;
+}
+.question-input, .option-input {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+.options-container {
+  margin-left: 20px;
+}
+.correct-radio {
+  margin-right: 10px;
+}
+.add-question-btn, .save-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 10px 5px;
+}
+.add-question-btn:hover, .save-btn:hover {
+  background: #45a049;
+}
+.delete-btn {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.delete-btn:hover {
+  background: #d32f2f;
+}
+.back-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: #2196F3;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+.back-btn:hover {
+  background: #0b7dda;
+}
+</style>
+</head>
+<body>
+<a href="edit-games.html" class="back-btn">← Bumalik sa Pili ng Laro</a>
+
+<div class="edit-quest-container">
+  <h1 style="text-align: center; color: #333; margin-bottom: 10px;">I-edit ang Knowledge Quest 🗺️</h1>
+  <p style="text-align: center; color: #666; font-size: 18px;">Mag-edit ng mga tanong para sa Map-Based Quiz.</p>
+
+  <div class="question-list" id="question-list">
+    <!-- Questions will be loaded here -->
+  </div>
+
+  <button class="add-question-btn" onclick="addQuestion()">Magdagdag ng Tanong</button>
+  <button class="save-btn" onclick="saveQuestions()">I-save ang Mga Pagbabago</button>
+</div>
+
+<script>
+let questions = [
+  {
+    question: "Ano ang pangngalan?",
+    options: ["Pang-uri", "Pangngalan", "Pandiwa", "Pang-abay"],
+    correct: 1
+  },
+  {
+    question: "Ano ang pandiwa?",
+    options: ["Salita na naglalarawan", "Salita na nagpapahayag ng aksyon", "Salita na nagpapahayag ng dami", "Salita na nagpapahayag ng lugar"],
+    correct: 1
+  },
+  {
+    question: "Ano ang wastong bantas sa dulo ng tanong?",
+    options: [".", ",", "!", "?"],
+    correct: 3
+  },
+  {
+    question: "Ano ang tamang gamit ng 'nang'?",
+    options: ["Sa harap ng salita", "Sa harap ng pandiwa", "Sa harap ng pangngalan", "Sa harap ng pang-uri"],
+    correct: 1
+  },
+  {
+    question: "Ano ang pangungusap?",
+    options: ["Isang salita", "Grupo ng salita na may buong diwa", "Isang letra", "Isang numero"],
+    correct: 1
+  }
+];
+
+function loadQuestions() {
+  const questionList = document.getElementById('question-list');
+  questionList.innerHTML = '';
+
+  questions.forEach((q, index) => {
+    const questionItem = document.createElement('div');
+    questionItem.className = 'question-item';
+    questionItem.innerHTML = `
+      <h3>Tanong ${index + 1}</h3>
+      <input type="text" class="question-input" value="${q.question}" onchange="updateQuestion(${index}, 'question', this.value)">
+      <div class="options-container">
+        <h4>Mga Opsiyon:</h4>
+        ${q.options.map((option, optIndex) => `
+          <div>
+            <input type="radio" name="correct-${index}" value="${optIndex}" ${q.correct === optIndex ? 'checked' : ''} onchange="updateCorrect(${index}, ${optIndex})">
+            <input type="text" class="option-input" value="${option}" onchange="updateOption(${index}, ${optIndex}, this.value)">
+          </div>
+        `).join('')}
+      </div>
+      <button class="delete-btn" onclick="deleteQuestion(${index})">Tanggalin</button>
+    `;
+    questionList.appendChild(questionItem);
+  });
+}
+
+function addQuestion() {
+  questions.push({
+    question: "Bagong tanong",
+    options: ["Opsiyon 1", "Opsiyon 2", "Opsiyon 3", "Opsiyon 4"],
+    correct: 0
+  });
+  loadQuestions();
+}
+
+function updateQuestion(index, field, value) {
+  questions[index][field] = value;
+}
+
+function updateOption(qIndex, optIndex, value) {
+  questions[qIndex].options[optIndex] = value;
+}
+
+function updateCorrect(qIndex, correctIndex) {
+  questions[qIndex].correct = correctIndex;
+}
+
+function deleteQuestion(index) {
+  if (confirm('Sigurado ka bang tanggalin ang tanong na ito?')) {
+    questions.splice(index, 1);
+    loadQuestions();
+  }
+}
+
+function saveQuestions() {
+  // Save to localStorage or Firebase
+  localStorage.setItem('questQuestions', JSON.stringify(questions));
+  alert('Mga pagbabago ay nai-save na!');
+}
+
+// Load questions on page load
+document.addEventListener('DOMContentLoaded', function() {
+  const saved = localStorage.getItem('questQuestions');
+  if (saved) {
+    questions = JSON.parse(saved);
+  }
+  loadQuestions();
+});
+</script>
+</body>
+</html>

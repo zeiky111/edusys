@@ -231,7 +231,7 @@
     <div class="leaderboard-container">
         <div class="leaderboard-header">
             <h1>🏆 Leaderboard</h1>
-            <p>Overall Ranking combines Ladder Quiz + Speed Challenge + Drag & Drop scores. Individual tabs show game-specific rankings!</p>
+            <p>Overall Ranking combines Ladder Quiz + Speed Challenge scores. Individual tabs show game-specific rankings!</p>
         </div>
 
         <div class="leaderboard-tabs">
@@ -284,14 +284,9 @@
         let currentUser = null;
         let currentTab = 'overall';
 
-        // Load leaderboard immediately
-        loadLeaderboard(currentTab);
-
-        // Check authentication for highlighting current user
+        // Check authentication
         onAuthStateChanged(auth, (user) => {
             currentUser = user;
-            console.log('🔐 Auth state changed:', user ? 'logged in' : 'anonymous');
-            // Reload to update current user highlighting
             loadLeaderboard(currentTab);
         });
 
@@ -312,23 +307,16 @@
                 let filteredDocs = [];
 
                 if (type === 'overall') {
-                    // Overall: Combine scores from all games
-                    console.log('📊 Loading overall leaderboard - combining all game scores');
+                    // Overall: Combine scores from ladder and speed challenge
+                    console.log('📊 Loading overall leaderboard - combining ladder and speed challenge scores');
 
                     // Get ladder quiz scores
                     const ladderRef = collection(db, 'leaderboard_ladder');
                     const ladderSnapshot = await getDocs(ladderRef);
-                    console.log('📊 Ladder quiz docs:', ladderSnapshot.docs.length);
 
                     // Get speed challenge scores
                     const speedRef = collection(db, 'leaderboard_speed_challenge');
                     const speedSnapshot = await getDocs(speedRef);
-                    console.log('📊 Speed challenge docs:', speedSnapshot.docs.length);
-
-                    // Get drag & drop scores
-                    const matchingRef = collection(db, 'leaderboard_drag_drop');
-                    const matchingSnapshot = await getDocs(matchingRef);
-                    console.log('📊 Drag & drop docs:', matchingSnapshot.docs.length);
 
                     // Combine scores by user
                     const userScores = new Map();
@@ -343,7 +331,6 @@
                                 displayName: data.displayName || 'Anonymous',
                                 ladderPoints: 0,
                                 speedPoints: 0,
-                                matchingPoints: 0,
                                 totalPoints: 0,
                                 badges: data.badges || []
                             });
@@ -363,7 +350,6 @@
                                 displayName: data.displayName || 'Anonymous',
                                 ladderPoints: 0,
                                 speedPoints: 0,
-                                matchingPoints: 0,
                                 totalPoints: 0,
                                 badges: data.badges || []
                             });
@@ -373,38 +359,18 @@
                         userData.totalPoints += data.points || 0;
                     });
 
-                    // Add drag & drop scores
-                    matchingSnapshot.forEach((doc) => {
-                        const data = doc.data();
-                        const userId = data.userId;
-                        if (!userScores.has(userId)) {
-                            userScores.set(userId, {
-                                userId: userId,
-                                displayName: data.displayName || 'Anonymous',
-                                ladderPoints: 0,
-                                speedPoints: 0,
-                                matchingPoints: 0,
-                                totalPoints: 0,
-                                badges: data.badges || []
+                    // Convert to array and filter out users with 0 total points
+                    userScores.forEach((userData) => {
+                        if (userData.totalPoints > 0) {
+                            filteredDocs.push({
+                                userId: userData.userId,
+                                data: userData,
+                                sortValue: userData.totalPoints
                             });
                         }
-                        const userData = userScores.get(userId);
-                        userData.matchingPoints = data.points || 0;
-                        userData.totalPoints += data.points || 0;
-                    });
-
-                    // Convert to array and include all users
-                    userScores.forEach((userData) => {
-                        console.log(`📊 User ${userData.userId}: totalPoints=${userData.totalPoints}, ladder=${userData.ladderPoints}, speed=${userData.speedPoints}, matching=${userData.matchingPoints}`);
-                        filteredDocs.push({
-                            userId: userData.userId,
-                            data: userData,
-                            sortValue: userData.totalPoints
-                        });
                     });
 
                     console.log(`📊 Overall leaderboard: ${filteredDocs.length} players with combined scores`);
-                    console.log('📊 Overall userScores:', Array.from(userScores.entries()));
 
                 } else {
                     // Individual game leaderboards
@@ -419,20 +385,20 @@
 
                     const gameRef = collection(db, collectionName);
                     const querySnapshot = await getDocs(gameRef);
-                    console.log(`📊 ${type} collection docs:`, querySnapshot.docs.length);
 
                     querySnapshot.forEach((doc) => {
                         const data = doc.data();
                         const points = data.points || 0;
-                        console.log(`📊 ${type} doc:`, { id: doc.id, userId: data.userId, points, displayName: data.displayName });
-                        filteredDocs.push({
-                            doc,
-                            data,
-                            sortValue: points
-                        });
+                        if (points > 0) {
+                            filteredDocs.push({
+                                doc,
+                                data,
+                                sortValue: points
+                            });
+                        }
                     });
 
-                    console.log(`📊 ${type} filtered docs:`, filteredDocs.length);
+                    console.log(`📊 ${type} leaderboard: ${filteredDocs.length} players`);
                 }
 
                 tbody.innerHTML = '';
@@ -440,12 +406,10 @@
                 // Sort by score descending
                 filteredDocs.sort((a, b) => b.sortValue - a.sortValue);
 
-                console.log(`📊 Final sorted ${type} docs:`, filteredDocs.map(d => ({ userId: d.data.userId || d.userId, points: d.sortValue, displayName: d.data.displayName })));
-
                 let rank = 1;
                 filteredDocs.forEach(({ doc, data, userId }) => {
                     const isCurrentUser = currentUser && (
-                        (data && data.userId === currentUser.uid) ||
+                        (doc && doc.id === currentUser.uid) ||
                         (userId && userId === currentUser.uid)
                     );
 

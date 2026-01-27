@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<title>Manage Topics</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/teacher.css">
+</head>
+<body>
+
+<div class="view" style="display:block;">
+    <button class="back-btn" onclick="window.location.href='../index.html'">⬅ Bumalik</button>
+
+  <h1>Manage Topics 📚</h1>
+  <div class="welcome">
+    "Dito mo mapamamahalaan ang lahat ng topics: add, edit, delete."
+  </div>
+
+  <div class="card-container" id="topics-container">
+    <!-- Topics will be loaded dynamically from database -->
+  </div>
+
+  <div class="start-game-container">
+    <button onclick="addTopic()">➕ Add New Topic</button>
+  </div>
+</div>
+
+<!-- Firebase is initialized in teacher.js module -->
+
+<script type="module" src="../js/teacher.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Wait for teacher module to load and authentication to be ready
+  function tryLoadTopics() {
+    if (typeof window.loadTopics === 'function' && typeof window.isAuthenticated !== 'undefined') {
+      console.log('Auth state ready:', window.isAuthenticated);
+      loadTopics();
+      console.log('Topics loaded successfully');
+    } else {
+      console.log('Waiting for teacher module and auth to load...', {
+        loadTopics: typeof window.loadTopics,
+        isAuthenticated: typeof window.isAuthenticated
+      });
+      setTimeout(tryLoadTopics, 500);
+    }
+  }
+  
+  tryLoadTopics();
+  
+  // Check if functions are available and add click handlers
+  function setupButtonHandlers() {
+    console.log('Setting up button handlers...');
+    console.log('window.editTopic:', typeof window.editTopic);
+    console.log('window.deleteTopic:', typeof window.deleteTopic);
+  }
+  
+  // Try immediately
+  setupButtonHandlers();
+  
+  // Also try after a delay in case module loads later
+  setTimeout(setupButtonHandlers, 1000);
+  setTimeout(setupButtonHandlers, 2000);
+  
+  // Check periodically until functions are available
+  const checkInterval = setInterval(() => {
+    if (typeof window.editTopic === 'function' && typeof window.deleteTopic === 'function') {
+      console.log('Teacher functions are now available!');
+      clearInterval(checkInterval);
+    }
+  }, 500);
+});
+
+// Global function to handle topic actions
+window.handleTopicAction = function(id, action) {
+  console.log('handleTopicAction called:', id, action);
+  
+  // Check if the actual functions are available
+  if (typeof window.editTopic === 'function' && typeof window.deleteTopic === 'function') {
+    if (action === 'edit') {
+      window.editTopic(id);
+    } else if (action === 'delete') {
+      window.deleteTopic(id);
+    }
+  } else {
+    // Fallback implementation if module didn't load
+    console.warn('Teacher module not loaded, using fallback');
+    
+    const card = document.querySelector(`.card[data-id='${id}']`);
+    if (!card) return;
+    
+    if (action === 'edit') {
+      const currentTitle = card.querySelector('h2').innerText;
+      const currentDesc = card.querySelector('p').innerText;
+      
+      const newTitle = prompt('Baguhin ang title:', currentTitle);
+      const newDesc = prompt('Baguhin ang description:', currentDesc);
+      
+      if (newTitle) card.querySelector('h2').innerText = newTitle;
+      if (newDesc) card.querySelector('p').innerText = newDesc;
+      
+      alert('Topic updated (local only - module not loaded)');
+    } else if (action === 'delete') {
+      if (confirm('Sigurado ka bang gusto mong i-delete ito?')) {
+        card.remove();
+        alert('Topic deleted (local only - module not loaded)');
+      }
+    }
+  }
+};
+</script>
+</body>
+</html>

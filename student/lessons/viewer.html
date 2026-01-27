@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<title>Lesson Viewer</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- User Profile Dropdown -->
+<div class="user-profile">
+  <button class="profile-btn" onclick="toggleDropdown()">
+    <div id="user-avatar" class="user-avatar">
+      <img id="avatar-img" src="" alt="Avatar" style="display: none;">
+      <span id="avatar-fallback">👤</span>
+    </div>
+    <span id="user-name">Mag-aaral</span>
+  </button>
+  <div class="dropdown-menu" id="profile-dropdown">
+    <a href="#" onclick="viewProfile()">Profile</a>
+    <a href="#" onclick="logout()">Mag-logout</a>
+  </div>
+</div>
+
+<!-- Lesson View -->
+<div id="lesson-view" class="view" style="display:block;">
+  <button class="back-btn" onclick="goBack()">⬅ Bumalik</button>
+
+  <h1 id="lesson-title">Loading Lesson...</h1>
+
+  <!-- Slides Container -->
+  <div class="slides-container">
+    <div class="loading">Loading lesson content...</div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="slide-nav" style="display: none;">
+    <button onclick="prevSlide()">⬅️ Previous</button>
+    <span id="slide-counter">1 / 1</span>
+    <button onclick="nextSlide()">Next ➡️</button>
+  </div>
+</div>
+
+<script type="module" src="../js/student.js"></script>
+<script>
+// Global variables
+let currentSlides = [];
+let currentSlideIndex = 0;
+
+// Default lesson content (fallback if no content in database)
+const defaultLessons = {
+  '1': [ // bahagi
+    {
+      title: "Introduction",
+      content: "Ang bahagi ng pananalita ay tumutukoy sa iba't ibang uri ng salita sa pangungusap."
+    },
+    {
+      title: "Pangngalan",
+      content: "<strong>Pangngalan</strong> – pangalan ng tao, hayop, bagay, lugar, o ideya (hal. \"Aso\", \"Bahay\")"
+    },
+    {
+      title: "Pang-uri",
+      content: "<strong>Pang-uri</strong> – naglalarawan sa pangngalan o panghalip (hal. \"Mabilis\", \"Maganda\")"
+    },
+    {
+      title: "Pandiwa",
+      content: "<strong>Pandiwa</strong> – nagsasaad ng kilos o galaw (hal. \"Tumakbo\", \"Kumain\")"
+    },
+    {
+      title: "Pang-abay",
+      content: "<strong>Pang-abay</strong> – naglalarawan sa pandiwa, pang-uri, o kapwa pang-abay (hal. \"Mabilis\", \"Dito\")"
+    },
+    {
+      title: "Panghalip",
+      content: "<strong>Panghalip</strong> – pamalit sa pangngalan (hal. \"Siya\", \"Ito\")"
+    },
+    {
+      title: "Pang-ukol",
+      content: "<strong>Pang-ukol</strong> – nag-uugnay ng pangngalan o panghalip sa ibang salita (hal. \"sa\", \"ng\")"
+    },
+    {
+      title: "Conclusion",
+      content: "Sa araling ito, matututuhan ang pagkilala at tamang paggamit ng bawat bahagi ng pananalita sa pangungusap."
+    }
+  ],
+  '2': [ // bantas
+    {
+      title: "Introduction",
+      content: "Ang wastong paggamit ng bantas ay mahalagang bahagi ng tamang pagsulat."
+    },
+    {
+      title: "Tuldok (.)",
+      content: "<strong>Tuldok</strong> – ginagamit sa dulo ng pangungusap (hal. \"Kumain siya.\")"
+    },
+    {
+      title: "Kuwit (,)",
+      content: "<strong>Kuwit</strong> – ginagamit upang paghiwalayin ang mga salita o parirala (hal. \"Siya, ako, at ikaw ay magkakaibigan.\")"
+    },
+    {
+      title: "Tandang Pananong (?)",
+      content: "<strong>Tandang Pananong</strong> – ginagamit sa dulo ng tanong (hal. \"Ano ang iyong pangalan?\")"
+    },
+    {
+      title: "Tandang Padamdam (!)",
+      content: "<strong>Tandang Padamdam</strong> – ginagamit upang ipahayag ang matinding damdamin (hal. \"Masaya ako!\")"
+    },
+    {
+      title: "Conclusion",
+      content: "Ang tamang paggamit ng bantas ay nakakatulong sa malinaw na komunikasyon."
+    }
+  ],
+  '3': [ // pangungusap
+    {
+      title: "Introduction",
+      content: "Ang pangungusap ay binubuo ng tamang pagkakasunod-sunod ng mga salita upang maipahayag ang kumpletong diwa."
+    },
+    {
+      title: "Paksa o Subject",
+      content: "Simulan sa paksa o subject (Sino o ano ang pinag-uusapan?)"
+    },
+    {
+      title: "Panaguri o Predicate",
+      content: "Sundan ng panaguri o predicate (Ano ang ginagawa o nangyayari sa paksa?)"
+    },
+    {
+      title: "Tamang Bantas",
+      content: "Gamitin ang tamang bantas sa dulo ng pangungusap"
+    },
+    {
+      title: "Halimbawa",
+      content: "Halimbawa: <em>\"Si Maria ay nagluto ng masarap na hapunan.\"</em>"
+    },
+    {
+      title: "Conclusion",
+      content: "Ang tamang pagbuo ng pangungusap ay mahalagang bahagi ng epektibong komunikasyon."
+    }
+  ],
+  '4': [ // nangng
+    {
+      title: "Introduction",
+      content: "Tamang Gamit ng \"Nang/Ng, Kung/Kong, Punasan/Punasin\""
+    },
+    {
+      title: "Ang salitang \"Nang\"",
+      content: "Ang salitang <strong>\"nang\"</strong> ay ginagamit upang ipahiwatig ang oras, dahilan, o kondisyon."
+    },
+    {
+      title: "Ang salitang \"Ng\"",
+      content: "<strong>\"Ng\"</strong> ay ginagamit bilang pang-ukol na nagpapahiwatig ng pag-aari."
+    },
+    {
+      title: "Pagkakaiba ng Nang at Ng",
+      content: "\"Nang\" = oras/dahilan/kondisyon<br>\"Ng\" = pag-aari/pang-ukol"
+    },
+    {
+      title: "Halimbawa",
+      content: "Halimbawa:<br>- Nang dumating siya... (oras)<br>- Bahay ng nanay (pag-aari)"
+    },
+    {
+      title: "Conclusion",
+      content: "Ang tamang pag-unawa sa mga salitang ito ay makakatulong sa wastong pagsulat."
+    }
+  ]
+};
+
+// Get lesson ID from URL parameter
+const urlParams = new URLSearchParams(window.location.search);
+const lessonId = urlParams.get('lesson');
+
+// Load lesson content
+async function loadLessonContent() {
+  if (!lessonId) {
+    showError('No lesson specified');
+    return;
+  }
+
+  console.log('Loading lesson content for:', lessonId);
+
+  try {
+    // Wait for student module to load
+    function tryLoadContent() {
+      if (typeof window.loadContent !== 'undefined') {
+        loadFromDatabase();
+      } else {
+        console.log('Waiting for student module to load...');
+        setTimeout(tryLoadContent, 500);
+      }
+    }
+
+    tryLoadContent();
+  } catch (error) {
+    console.error('Error in loadLessonContent:', error);
+    showError('Failed to load lesson content');
+  }
+}
+
+async function loadFromDatabase() {
+  try {
+    console.log('Loading lesson content from database for lesson:', lessonId);
+
+    // Use the loadContent function from student.js
+    const content = await window.loadContent(lessonId);
+
+    if (content && typeof content === 'string') {
+      try {
+        currentSlides = JSON.parse(content);
+        console.log('Lesson content loaded and parsed:', currentSlides);
+
+        if (currentSlides.length > 0) {
+          // Update title from first slide or get from topic
+          await loadLessonTitle();
+          renderSlides();
+          showNavigation();
+          return;
+        }
+      } catch (parseError) {
+        console.error('Content is not valid JSON:', parseError);
+      }
+    }
+
+    console.log('No valid lesson content found, trying default content');
+    // Try to load default content for predefined lessons
+    const defaultContent = defaultLessons[lessonId];
+    if (defaultContent) {
+      currentSlides = defaultContent;
+      console.log('Loaded default content for lesson:', lessonId);
+      await loadLessonTitle();
+      renderSlides();
+      showNavigation();
+      return;
+    } else {
+      showError('Lesson content not found');
+    }
+  } catch (error) {
+    console.error('Error loading from database:', error);
+    showError('Failed to load lesson from database');
+  }
+}
+
+async function loadLessonTitle() {
+  // Default titles for predefined lessons
+  const defaultTitles = {
+    '1': 'Bahagi ng Pananalita',
+    '2': 'Paggamit ng Wastong Bantas',
+    '3': 'Pagbuo ng Pangungusap',
+    '4': 'Tamang Gamit ng Nang/Ng'
+  };
+
+  const defaultTitle = defaultTitles[lessonId];
+
+  try {
+    // Try to get topic title from database using Firebase v9 syntax
+    const docRef = window.doc(window.db, 'topics', lessonId.toString());
+    const docSnap = await window.getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const topic = docSnap.data();
+      document.getElementById('lesson-title').textContent = topic.title;
+    } else if (defaultTitle) {
+      document.getElementById('lesson-title').textContent = defaultTitle;
+    } else {
+      document.getElementById('lesson-title').textContent = 'Lesson Viewer';
+    }
+  } catch (error) {
+    console.error('Error loading lesson title:', error);
+    document.getElementById('lesson-title').textContent = defaultTitle || 'Lesson Viewer';
+  }
+}
+
+function renderSlides() {
+  const container = document.querySelector('.slides-container');
+
+  if (currentSlides.length === 0) {
+    container.innerHTML = '<div class="error">No slides available</div>';
+    return;
+  }
+
+  // Clear container
+  container.innerHTML = '';
+
+  // Create slide elements
+  currentSlides.forEach((slide, index) => {
+    const slideDiv = document.createElement('div');
+    slideDiv.className = `slide ${index === currentSlideIndex ? 'active' : ''}`;
+    slideDiv.innerHTML = `
+      <h3>${slide.title || 'Untitled Slide'}</h3>
+      <div class="slide-text">${slide.content || 'No content'}</div>
+    `;
+    container.appendChild(slideDiv);
+  });
+
+  updateNavigation();
+}
+
+function showNavigation() {
+  document.querySelector('.slide-nav').style.display = 'flex';
+}
+
+function updateNavigation() {
+  const counter = document.getElementById('slide-counter');
+  counter.textContent = `${currentSlideIndex + 1} / ${currentSlides.length}`;
+}
+
+function nextSlide() {
+  if (currentSlideIndex < currentSlides.length - 1) {
+    currentSlideIndex++;
+    renderSlides();
+  }
+}
+
+function prevSlide() {
+  if (currentSlideIndex > 0) {
+    currentSlideIndex--;
+    renderSlides();
+  }
+}
+
+function showError(message) {
+  const container = document.querySelector('.slides-container');
+  container.innerHTML = `<div class="error">${message}</div>`;
+  document.getElementById('lesson-title').textContent = 'Error Loading Lesson';
+}
+
+function goBack() {
+  window.location.href = '../index.html';
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  loadLessonContent();
+});
+</script>
+
+</body>
+</html></content>
+<parameter name="filePath">c:\Users\LENOVO\OneDrive\ドキュメント\edu system\wikahusayan\student\lessons\viewer.html

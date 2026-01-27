@@ -54,21 +54,21 @@ async function saveGameScore(userId, gameType, score, displayName = null, groupN
         }
 
         // For matching game, accumulate points across sessions
-        const currentPoints = existingData?.points || 0;
+        const currentPoints = existingData?.score || 0;
         const accumulated = currentPoints + (score || 0);
 
         const updateData = {
             userId: userId,
             displayName: displayName || existingData?.displayName || 'Anonymous',
             groupName: groupName || existingData?.groupName || 'No Group',
-            points: accumulated,
+            score: accumulated,
             updatedAt: new Date()
         };
 
-        updateData.totalPoints = updateData.points;
-        updateData.matchingPoints = updateData.points;
+        updateData.totalPoints = updateData.score;
+        updateData.matchingPoints = updateData.score;
 
-        console.log(`🔗 Matching score (accumulated): ${updateData.points}`);
+        console.log(`🔗 Matching score (accumulated): ${updateData.score}`);
 
         // Initialize badges array if not existing
         if (!existingData?.badges) {

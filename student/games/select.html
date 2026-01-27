@@ -333,7 +333,7 @@
 // Firebase imports
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
-import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+import { getFirestore, collection, getDocs, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -391,13 +391,15 @@ window.refreshLeaderboards = refreshLeaderboards;
 async function loadOverallLeaderboard() {
   console.log('🔍 DEBUG: Loading overall leaderboard...');
   try {
-    // Get all players from ladder quiz
+    // Get top players from ladder quiz
     const ladderRef = collection(db, 'leaderboard_ladder');
-    const ladderSnap = await getDocs(ladderRef);
+    const ladderQuery = query(ladderRef, orderBy('points', 'desc'), limit(10));
+    const ladderSnap = await getDocs(ladderQuery);
 
-    // Get all players from speed challenge
+    // Get top players from speed challenge
     const speedRef = collection(db, 'leaderboard_speed_challenge');
-    const speedSnap = await getDocs(speedRef);
+    const speedQuery = query(speedRef, orderBy('points', 'desc'), limit(10));
+    const speedSnap = await getDocs(speedQuery);
 
     // Combine and aggregate scores
     const playerMap = new Map();
@@ -418,7 +420,7 @@ async function loadOverallLeaderboard() {
         });
       } else {
         const existing = playerMap.get(userId);
-        existing.ladderPoints = Math.max(existing.ladderPoints, data.points || 0);
+        existing.ladderPoints = data.points || 0;
         existing.totalPoints = existing.ladderPoints + existing.quizPoints;
       }
     });
@@ -439,7 +441,7 @@ async function loadOverallLeaderboard() {
         });
       } else {
         const existing = playerMap.get(userId);
-        existing.quizPoints = Math.max(existing.quizPoints, data.points || 0);
+        existing.quizPoints = data.points || 0;
         existing.totalPoints = existing.ladderPoints + existing.quizPoints;
       }
     });
@@ -499,36 +501,24 @@ async function loadMatchingLeaderboard() {
   console.log('🔍 DEBUG: Loading matching leaderboard...');
   try {
     const leaderboardRef = collection(db, 'leaderboard_drag_drop');
-    console.log('🔍 DEBUG: Getting all matching leaderboard docs...');
-    const querySnapshot = await getDocs(leaderboardRef);
+    const q = query(leaderboardRef, orderBy('points', 'desc'), limit(4));
+    console.log('🔍 DEBUG: Executing query for matching leaderboard...');
+    const querySnapshot = await getDocs(q);
     console.log('🔍 DEBUG: Query completed, docs found:', querySnapshot.size);
-
-    // Convert to array and sort by points descending
-    const players = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      players.push({
-        id: doc.id,
-        ...data
-      });
-    });
-
-    // Sort by points descending and take top 4
-    players.sort((a, b) => (b.points || 0) - (a.points || 0));
-    const topPlayers = players.slice(0, 4);
 
     const container = document.getElementById('matching-leaderboard');
     container.innerHTML = '';
 
-    if (topPlayers.length === 0) {
+    if (querySnapshot.empty) {
       console.log('🔍 DEBUG: No matching leaderboard data found');
       container.innerHTML = '<div class="no-data">No leaderboard data yet. Play the drag & drop game to see rankings!</div>';
       return;
     }
 
     let rank = 1;
-    topPlayers.forEach((data) => {
-      console.log('🔍 DEBUG: Processing matching leaderboard entry:', data.id, data);
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      console.log('🔍 DEBUG: Processing matching leaderboard entry:', doc.id, data);
       const isCurrentUser = currentUser && data.userId === currentUser.uid;
       const item = document.createElement('div');
       item.className = `leaderboard-item ${isCurrentUser ? 'current-user' : ''}`;

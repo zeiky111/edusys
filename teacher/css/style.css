@@ -1,0 +1,568 @@
+ /* CSS Variables for Advanced Theming */
+:root {
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --success-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  --dark-overlay: rgba(0, 0, 0, 0.7);
+  --glow-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+  --text-primary: #ffffff;
+  --text-secondary: #e0e0e0;
+  --card-bg: rgba(255, 255, 255, 0.95);
+  --border-radius: 20px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* General Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Body and Fonts */
+body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--primary-gradient);
+  background-attachment: fixed;
+  min-height: 100vh;
+  color: var(--text-primary);
+  overflow-x: hidden;
+  position: relative;
+}
+
+
+
+/* Professional Game-Style Animated Background */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    /* Enhanced base gradient layers with higher opacity */
+    linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%),
+    linear-gradient(45deg, rgba(240, 147, 251, 0.8) 0%, rgba(245, 87, 108, 0.8) 100%),
+    linear-gradient(-45deg, rgba(79, 172, 254, 0.85) 0%, rgba(0, 242, 254, 0.85) 100%),
+
+    /* Prominent geometric block patterns */
+    linear-gradient(90deg, rgba(255, 255, 255, 0.25) 2px, transparent 2px),
+    linear-gradient(rgba(255, 255, 255, 0.25) 2px, transparent 2px),
+
+    /* Enhanced particle effect overlays with glow */
+    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.6) 2px, transparent 4px),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.6) 2px, transparent 4px),
+    radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.6) 2px, transparent 4px),
+    radial-gradient(circle at 60% 90%, rgba(255, 255, 255, 0.6) 2px, transparent 4px),
+    radial-gradient(circle at 90% 60%, rgba(255, 255, 255, 0.6) 2px, transparent 4px),
+
+    /* Dramatic geometric shape overlays */
+    conic-gradient(from 0deg at 50% 50%, rgba(255, 255, 255, 0.4) 0deg, transparent 90deg, rgba(255, 255, 255, 0.4) 180deg, transparent 270deg);
+  background-size:
+    100% 100%,
+    100px 100px,
+    100px 100px,
+    100px 100px,
+    100px 100px,
+    100px 100px,
+    100px 100px,
+    100px 100px,
+    100px 100px,
+    100px 100px,
+    100px 100px,
+    200px 200px;
+  animation:
+    backgroundShift 6s ease-in-out infinite,
+    particleFloat 4s ease-in-out infinite;
+  z-index: -1;
+}
+
+/* Headings */
+h1 {
+  text-align: center;
+  font-size: 42px;
+  margin-bottom: 20px;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from { filter: brightness(1); }
+  to { filter: brightness(1.1); }
+}
+
+/* Welcome Message */
+.welcome { 
+  text-align: center; 
+  margin-bottom: 40px; 
+  font-size: 18px; 
+  color: #f0f0f0; 
+}
+
+/* Hide all views by default */
+.view { 
+  display: none; 
+  padding: 30px; 
+}
+
+/* Card container */
+.card-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 30px;
+  perspective: 1000px;
+}
+
+/* Cards */
+.card {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  color: #333;
+  width: 280px;
+  border-radius: var(--border-radius);
+  padding: 25px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  transition: var(--transition);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: var(--accent-gradient);
+  transition: left 0.5s;
+  z-index: -1;
+}
+
+.card:hover::before {
+  left: 0;
+}
+
+.card:hover {
+  transform: translateY(-15px) scale(1.05);
+  box-shadow: var(--glow-shadow), 0 20px 40px rgba(0, 0, 0, 0.3);
+  border-color: rgba(79, 172, 254, 0.5);
+}
+
+/* Card Headings */
+.card h2 { 
+  font-size: 20px; 
+  margin-bottom: 12px; 
+}
+
+/* Card Paragraphs */
+.card p { 
+  font-size: 14px; 
+  margin-bottom: 15px; 
+  color: #555; 
+}
+
+/* Buttons */
+.card button, 
+.back-btn, 
+.start-game { 
+  padding: 10px 20px; 
+  background: #2575fc; 
+  color: #fff; 
+  border: none; 
+  border-radius: 8px; 
+  cursor: pointer; 
+  font-weight: 600; 
+  transition: background 0.3s, transform 0.2s; 
+}
+
+/* Button Hover */
+.card button:hover, 
+.back-btn:hover, 
+.start-game:hover { 
+  background: #6a11cb; 
+  transform: scale(1.05); 
+}
+
+/* Start Game Container */
+.start-game-container { 
+  text-align: center; 
+  margin-top: 50px; 
+}
+
+/* Lesson content */
+.lesson h2 {
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  font-size: 32px;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.lesson p, 
+.lesson li { 
+  color: #f0f0f0; 
+  line-height: 1.5; 
+}
+
+.lesson ul {
+  margin-left: 20px;
+  margin-bottom: 15px;
+}
+
+/* Professional Game-Style Keyframe Animations */
+@keyframes backgroundShift {
+  0%, 100% {
+    background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%;
+    filter: hue-rotate(0deg) brightness(1.2) saturate(1.3) contrast(1.4);
+  }
+  25% {
+    background-position: 100% 100%, 50% 50%, 25% 75%, 75% 25%, 10% 90%, 10% 10%, 90% 10%, 10% 90%, 50% 50%, 30% 70%, 70% 30%, 20% 80%, 80% 20%, 60% 40%, 40% 60%;
+    filter: hue-rotate(15deg) brightness(1.4) saturate(1.5) contrast(1.6);
+  }
+  50% {
+    background-position: 50% 100%, 100% 0%, 75% 25%, 25% 75%, 90% 10%, 90% 10%, 10% 90%, 90% 10%, 50% 50%, 80% 20%, 20% 80%, 60% 40%, 40% 60%, 90% 10%, 10% 90%;
+    filter: hue-rotate(30deg) brightness(1.1) saturate(1.7) contrast(1.5);
+  }
+  75% {
+    background-position: 100% 50%, 0% 100%, 50% 0%, 0% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 40% 60%, 60% 40%, 80% 20%, 20% 80%, 70% 30%, 30% 70%;
+    filter: hue-rotate(20deg) brightness(1.3) saturate(1.4) contrast(1.5);
+  }
+}
+
+@keyframes particleFloat {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) scale(1) rotate(0deg);
+    opacity: 0.4;
+    filter: blur(0px);
+  }
+  25% {
+    transform: translateY(-30px) translateX(15px) scale(1.2) rotate(90deg);
+    opacity: 0.7;
+    filter: blur(0.5px);
+  }
+  50% {
+    transform: translateY(-15px) translateX(-20px) scale(0.8) rotate(180deg);
+    opacity: 0.9;
+    filter: blur(1px);
+  }
+  75% {
+    transform: translateY(20px) translateX(10px) scale(1.1) rotate(270deg);
+    opacity: 0.6;
+    filter: blur(0.3px);
+  }
+}
+
+@keyframes geometricRotate {
+  0% { transform: rotate(0deg) scale(1) skew(0deg); filter: hue-rotate(0deg); }
+  25% { transform: rotate(90deg) scale(1.1) skew(5deg); filter: hue-rotate(90deg); }
+  50% { transform: rotate(180deg) scale(0.9) skew(-5deg); filter: hue-rotate(180deg); }
+  75% { transform: rotate(270deg) scale(1.05) skew(2deg); filter: hue-rotate(270deg); }
+  100% { transform: rotate(360deg) scale(1) skew(0deg); filter: hue-rotate(360deg); }
+}
+
+@keyframes orbDrift {
+  0%, 100% {
+    transform: translateX(0px) translateY(0px) rotate(0deg) scale(1);
+    background-position: 20% 30%, 80% 70%, 60% 20%, 0% 0%, 0% 0%, 40% 60%, 90% 10%, 10% 90%;
+    opacity: 0.8;
+  }
+  33% {
+    transform: translateX(40px) translateY(-25px) rotate(120deg) scale(1.1);
+    background-position: 50% 10%, 20% 80%, 80% 40%, 10% 10%, 10% 10%, 70% 30%, 30% 70%, 60% 40%;
+    opacity: 1;
+  }
+  66% {
+    transform: translateX(-30px) translateY(35px) rotate(240deg) scale(0.9);
+    background-position: 80% 50%, 40% 20%, 30% 70%, 20% 20%, 20% 20%, 50% 80%, 80% 50%, 30% 60%;
+    opacity: 0.9;
+  }
+}
+
+@keyframes energyPulse {
+  0% {
+    filter: brightness(1) contrast(1) saturate(1) blur(0px);
+    opacity: 0.7;
+  }
+  50% {
+    filter: brightness(1.5) contrast(1.3) saturate(1.4) blur(0.5px);
+    opacity: 1;
+  }
+  100% {
+    filter: brightness(1) contrast(1) saturate(1) blur(0px);
+    opacity: 0.7;
+  }
+}
+
+@keyframes floatingOrbs {
+  0%, 100% {
+    background-position: 15% 85%, 85% 15%, 35% 65%, 65% 35%, 50% 20%, 20% 50%, 80% 80%;
+    opacity: 0.8;
+  }
+  25% {
+    background-position: 25% 75%, 75% 25%, 45% 55%, 55% 45%, 60% 30%, 30% 60%, 70% 70%;
+    opacity: 1;
+  }
+  50% {
+    background-position: 35% 65%, 65% 35%, 55% 45%, 45% 55%, 70% 40%, 40% 70%, 60% 60%;
+    opacity: 0.9;
+  }
+  75% {
+    background-position: 45% 55%, 55% 45%, 65% 35%, 35% 65%, 80% 50%, 50% 80%, 50% 50%;
+    opacity: 0.7;
+  }
+}
+
+@keyframes energyStreams {
+  0%, 100% {
+    background-position: 10% 30%, 90% 70%, 30% 10%, 70% 90%;
+    opacity: 0.9;
+  }
+  50% {
+    background-position: 20% 40%, 80% 60%, 40% 20%, 60% 80%;
+    opacity: 1;
+  }
+}
+
+@keyframes holographicShift {
+  0%, 100% {
+    filter: hue-rotate(0deg) brightness(1.3) saturate(1.2) contrast(1.4);
+    background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%;
+  }
+  33% {
+    filter: hue-rotate(120deg) brightness(1.5) saturate(1.4) contrast(1.6);
+    background-position: 100% 100%, 50% 50%, 25% 75%, 75% 25%;
+  }
+  66% {
+    filter: hue-rotate(240deg) brightness(1.2) saturate(1.6) contrast(1.5);
+    background-position: 50% 50%, 100% 0%, 75% 25%, 25% 75%;
+  }
+}
+
+@keyframes quantumField {
+  0%, 100% {
+    transform: translateX(0px) translateY(0px) scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateX(10px) translateY(-10px) scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes energyWave {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(90deg) scale(1.1); }
+  50% { transform: rotate(180deg) scale(0.9); }
+  75% { transform: rotate(270deg) scale(1.05); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes gridPulse {
+  0%, 100% {
+    opacity: 0.1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes glitchEffect {
+  0%, 100% {
+    transform: translateX(0px);
+    opacity: 0.2;
+  }
+  10% {
+    transform: translateX(-2px);
+    opacity: 0.5;
+  }
+  20% {
+    transform: translateX(2px);
+    opacity: 0.3;
+  }
+  30% {
+    transform: translateX(-1px);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateX(1px);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateX(0px);
+    opacity: 0.6;
+  }
+  60% {
+    transform: translateX(-1px);
+    opacity: 0.3;
+  }
+  70% {
+    transform: translateX(1px);
+    opacity: 0.5;
+  }
+  80% {
+    transform: translateX(-2px);
+    opacity: 0.2;
+  }
+  90% {
+    transform: translateX(2px);
+    opacity: 0.4;
+  }
+}
+
+@keyframes burstEffect {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.8;
+  }
+  25% {
+    transform: scale(1.2) rotate(90deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.8) rotate(180deg);
+    opacity: 0.9;
+  }
+  75% {
+    transform: scale(1.1) rotate(270deg);
+    opacity: 1;
+  }
+}
+
+@keyframes waveDistortion {
+  0%, 100% {
+    transform: skew(0deg, 0deg) scale(1);
+    filter: hue-rotate(0deg);
+  }
+  25% {
+    transform: skew(2deg, -1deg) scale(1.02);
+    filter: hue-rotate(90deg);
+  }
+  50% {
+    transform: skew(-1deg, 2deg) scale(0.98);
+    filter: hue-rotate(180deg);
+  }
+  75% {
+    transform: skew(1deg, -2deg) scale(1.01);
+    filter: hue-rotate(270deg);
+  }
+}
+
+@keyframes colorCycle {
+  0%, 100% {
+    filter: hue-rotate(0deg) brightness(1.5) saturate(1.4) contrast(1.6);
+  }
+  16.67% {
+    filter: hue-rotate(60deg) brightness(1.6) saturate(1.5) contrast(1.7);
+  }
+  33.33% {
+    filter: hue-rotate(120deg) brightness(1.4) saturate(1.6) contrast(1.5);
+  }
+  50% {
+    filter: hue-rotate(180deg) brightness(1.7) saturate(1.3) contrast(1.8);
+  }
+  66.67% {
+    filter: hue-rotate(240deg) brightness(1.5) saturate(1.7) contrast(1.4);
+  }
+  83.33% {
+    filter: hue-rotate(300deg) brightness(1.6) saturate(1.4) contrast(1.6);
+  }
+}
+
+@keyframes fallingStars {
+  0% {
+    transform: translateY(-100vh) translateX(0px) scale(1);
+    opacity: 1;
+  }
+  10% {
+    transform: translateY(-80vh) translateX(10px) scale(1.1);
+    opacity: 0.9;
+  }
+  20% {
+    transform: translateY(-60vh) translateX(20px) scale(0.9);
+    opacity: 0.8;
+  }
+  30% {
+    transform: translateY(-40vh) translateX(30px) scale(1.2);
+    opacity: 0.7;
+  }
+  40% {
+    transform: translateY(-20vh) translateX(40px) scale(0.8);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(0vh) translateX(50px) scale(1);
+    opacity: 0.5;
+  }
+  60% {
+    transform: translateY(20vh) translateX(60px) scale(1.1);
+    opacity: 0.4;
+  }
+  70% {
+    transform: translateY(40vh) translateX(70px) scale(0.9);
+    opacity: 0.3;
+  }
+  80% {
+    transform: translateY(60vh) translateX(80px) scale(1.2);
+    opacity: 0.2;
+  }
+  90% {
+    transform: translateY(80vh) translateX(90px) scale(0.8);
+    opacity: 0.1;
+  }
+  100% {
+    transform: translateY(100vh) translateX(100px) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes screenShake {
+  0%, 100% {
+    transform: translateX(0px) translateY(0px) rotate(0deg);
+  }
+  10% {
+    transform: translateX(-2px) translateY(1px) rotate(0.1deg);
+  }
+  20% {
+    transform: translateX(2px) translateY(-1px) rotate(-0.1deg);
+  }
+  30% {
+    transform: translateX(-1px) translateY(2px) rotate(0.05deg);
+  }
+  40% {
+    transform: translateX(1px) translateY(-2px) rotate(-0.05deg);
+  }
+  50% {
+    transform: translateX(-3px) translateY(1px) rotate(0.2deg);
+  }
+  60% {
+    transform: translateX(3px) translateY(-1px) rotate(-0.2deg);
+  }
+  70% {
+    transform: translateX(-1px) translateY(3px) rotate(0.1deg);
+  }
+  80% {
+    transform: translateX(1px) translateY(-3px) rotate(-0.1deg);
+  }
+  90% {
+    transform: translateX(-2px) translateY(2px) rotate(0.15deg);
+  }
+}

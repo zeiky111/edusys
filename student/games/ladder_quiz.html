@@ -419,14 +419,14 @@
                     userId: userId,
                     displayName: displayName || existingData?.displayName || 'Anonymous',
                     groupName: groupName || existingData?.groupName || 'No Group',
-                    points: Math.max(existingData?.points || 0, score),
+                    score: Math.max(existingData?.score || 0, score),
                     updatedAt: new Date()
                 };
 
-                updateData.totalPoints = updateData.points;
-                updateData.ladderPoints = updateData.points;
+                updateData.totalPoints = updateData.score;
+                updateData.ladderPoints = updateData.score;
 
-                console.log(`📊 Ladder quiz points: ${updateData.points}`);
+                console.log(`📊 Ladder quiz score: ${updateData.score}`);
 
                 // Initialize badges array if not existing
                 if (!existingData?.badges) {

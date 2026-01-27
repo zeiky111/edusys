@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/teacher.css">
+<script type="module">
+// Wait for teacher.js to load, then check auth state
+document.addEventListener('DOMContentLoaded', function() {
+  function checkAuth() {
+    if (typeof window.auth !== 'undefined' && window.auth) {
+      // Use the auth from teacher.js
+      const { onAuthStateChanged } = window;
+      if (onAuthStateChanged) {
+        onAuthStateChanged(window.auth, (user) => {
+          if (!user) {
+            // Not authenticated, redirect to login
+            window.location.href = '../public/index.html';
+          }
+        });
+      }
+    } else {
+      // Wait a bit more for teacher.js to load
+      setTimeout(checkAuth, 500);
+    }
+  }
+  checkAuth();
+});
+
+// Handle logout - works even if teacher.js hasn't loaded yet
+function handleLogout() {
+  console.log('handleLogout called');
+
+  // Clear storage
+  sessionStorage.clear();
+  localStorage.clear();
+
+  // Redirect immediately
+  window.location.href = '../public/index.html';
+}
+</script>
+</head>
+<body>
+
+<div id="dashboard" class="view" style="display:block;">
+  <h1>Wikahusayan Teacher Dashboard 👩‍🏫</h1>
+  <div class="welcome">
+    <span id="teacher-greeting">"Maligayang pagdating! Pamahalaan ang mga topics at subaybayan ang progreso ng mga estudyante."</span>
+  </div>
+
+  <div class="card-container">
+    <div class="card">
+      <h2>Manage Topics</h2>
+      <p>Magdagdag, mag-edit o mag-delete ng mga topics para sa Wikahusayan Quest.</p>
+      <button onclick="window.location.href='lessons/manage-topics.html'">Buksan</button>
+    </div>
+
+    <div class="card">
+      <h2>Edit Lesson</h2>
+      <p>I-edit ang content ng bawat topic sa mga cards ng estudyante.</p>
+      <button onclick="window.location.href='lessons/edit-lesson.html'">Buksan</button>
+    </div>
+
+    <div class="card">
+      <h2>Student List</h2>
+      <p>Tingnan ang listahan ng mga estudyante at kanilang detalye.</p>
+      <button onclick="window.location.href='students/student-list.html'">Buksan</button>
+    </div>
+
+    <div class="card">
+      <h2>Progress Tracking</h2>
+      <p>Subaybayan ang progreso ng mga estudyante sa bawat aralin at laro.</p>
+      <button onclick="window.location.href='students/progress.html'">Buksan</button>
+    </div>
+
+    <div class="card">
+      <h2>Presentation</h2>
+      <p>Ipresenta ang apat na topics sa slide format.</p>
+      <button onclick="window.location.href='lessons/presentation.html'">Buksan</button>
+    </div>
+
+    <div class="card">
+      <h2>Edit Games</h2>
+      <p>I-edit ang mga tanong at content ng mga laro (Knowledge Quest, Drag & Drop Puzzle, Speed Challenge).</p>
+      <button onclick="window.location.href='games/edit-games.html'">Buksan</button>
+    </div>
+
+    <div class="card">
+      <h2>Clear Leaderboard</h2>
+      <p>I-clear ang leaderboard data ng mga laro kung kinakailangan.</p>
+      <button onclick="showClearLeaderboardModal()">I-clear</button>
+    </div>
+  </div>
+
+  <div class="logout-container">
+    <button class="logout-btn" onclick="handleLogout()">🚪 Logout</button>
+  </div>
+</div>
+
+<!-- Clear Leaderboard Modal -->
+<div id="clear-leaderboard-modal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <h2>🗑️ Clear Leaderboard Data</h2>
+    <p>Are you sure you want to clear all leaderboard data? This action cannot be undone.</p>
+    
+    <div class="leaderboard-options">
+      <label><input type="checkbox" id="clear-ladder" checked> Ladder Quiz Leaderboard</label><br>
+      <label><input type="checkbox" id="clear-speed" checked> Speed Challenge Leaderboard</label><br>
+      <label><input type="checkbox" id="clear-drag-drop" checked> Drag & Drop Puzzle Leaderboard</label><br>
+      <label><input type="checkbox" id="clear-quest" checked> Quest Game Leaderboard</label><br>
+      <label><input type="checkbox" id="clear-general" checked> General Leaderboard</label><br>
+    </div>
+    
+    <div class="modal-buttons">
+      <button class="cancel-btn" onclick="hideClearLeaderboardModal()">Cancel</button>
+      <button class="confirm-btn" onclick="clearLeaderboardData()">Clear Data</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/teacher.js"></script>
+
+<script>
+// Handle logout - works immediately
+function handleLogout() {
+  console.log('handleLogout called - clearing storage and redirecting');
+
+  // Clear all storage
+  sessionStorage.clear();
+  localStorage.clear();
+
+  // Force redirect to login page
+  window.location.href = '../public/index.html';
+}
+</script>
+</body>
+</html>

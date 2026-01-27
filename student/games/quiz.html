@@ -694,14 +694,14 @@
                     userId: userId,
                     displayName: displayName || existingData?.displayName || 'Anonymous',
                     groupName: groupName || existingData?.groupName || 'No Group',
-                    points: Math.max(existingData?.points || 0, score),
+                    score: Math.max(existingData?.score || 0, score),
                     updatedAt: new Date()
                 };
 
-                updateData.totalPoints = updateData.points;
-                updateData.quizPoints = updateData.points;
+                updateData.totalPoints = updateData.score;
+                updateData.quizPoints = updateData.score;
 
-                console.log(`⚡ Speed challenge points: ${updateData.points}`);
+                console.log(`⚡ Speed challenge score: ${updateData.score}`);
 
                 // Initialize badges array if not existing
                 if (!existingData?.badges) {

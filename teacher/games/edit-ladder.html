@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<title>I-edit ang Ladder Quiz - Wikahusayan Quest</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/teacher.css">
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  color: #333;
+}
+
+.back-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 12px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.edit-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.edit-header {
+  text-align: center;
+  color: white;
+  margin-bottom: 40px;
+}
+
+.edit-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.edit-subtitle {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.questions-container {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  backdrop-filter: blur(10px);
+}
+
+.questions-instructions {
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 30px;
+  border-left: 5px solid #2196F3;
+}
+
+.questions-instructions h3 {
+  color: #1976D2;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.questions-instructions p {
+  color: #424242;
+  line-height: 1.6;
+}
+
+.question-item {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-radius: 15px;
+  padding: 25px;
+  margin-bottom: 20px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.question-item:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+}
+
+.question-item-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  gap: 10px;
+}
+
+.question-item-number {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #667eea;
+  flex-shrink: 0;
+}
+
+.title-input {
+  flex: 1;
+  margin-bottom: 0 !important;
+}
+
+.question-item-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.question-type-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.question-type-toggle label {
+  font-weight: 600;
+  color: #555;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 30px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 30px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+  transform: translateX(30px);
+}
+
+.question-input, .sentence-input, .title-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 1rem;
+  margin-bottom: 15px;
+  transition: border-color 0.3s ease;
+}
+
+.question-input:focus, .sentence-input:focus, .title-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.options-container {
+  margin-left: 20px;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.option-radio {
+  margin: 0;
+}
+
+.option-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: border-color 0.3s ease;
+}
+
+.option-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.action-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.add-question-btn {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+}
+
+.add-question-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.delete-btn {
+  background: linear-gradient(135deg, #f44336, #d32f2f);
+  color: white;
+}
+
+.delete-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+  margin-top: 30px;
+}
+
+.save-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 30px rgba(76, 175, 80, 0.4);
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  margin-left: 10px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.status-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 25px;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  z-index: 1000;
+  animation: slideInRight 0.5s ease-out;
+  backdrop-filter: blur(10px);
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.status-success {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+}
+
+.status-error {
+  background: linear-gradient(135deg, #f44336, #d32f2f);
+}
+
+.status-info {
+  background: linear-gradient(135deg, #2196F3, #0b7dda);
+}
+
+/* Loading message styles */
+.loading-message {
+  text-align: center;
+  padding: 60px 20px;
+  color: white;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  margin: 0 auto 20px;
+}
+
+.loading-message p {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .edit-container {
+    padding: 15px;
+  }
+
+  .edit-title {
+    font-size: 2rem;
+  }
+
+  .question-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .question-item-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .option-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+}
+</style>
+</head>
+<body>
+<a href="edit-games.html" class="back-btn">🏠 Bumalik sa Pili ng Laro</a>
+
+<div class="edit-container">
+  <div class="edit-header">
+    <h1 class="edit-title">🪜 I-edit ang Ladder Quiz</h1>
+    <p class="edit-subtitle">Mag-edit ng mga tanong para sa Ladder-based Grammar Quiz</p>
+  </div>
+
+  <div id="loading-message" class="loading-message">
+    <div class="loading-spinner"></div>
+    <p>Sinusuri ang authentication...</p>
+  </div>
+
+  <div id="main-content" style="display: none;">
+    <div class="questions-container">
+      <div class="questions-instructions">
+        <h3>📝 Paalala sa Teacher:</h3>
+        <p>Ang Ladder Quiz ay may 8 steps na may mga tanong tungkol sa grammar. Ang mga mag-aaral ay aakyat sa hagdan kapag tama ang sagot. Maaari kang pumili kung multiple choice o text input ang gagamitin sa bawat tanong.</p>
+      </div>
+
+      <div id="question-list">
+        <!-- Questions will be loaded here -->
+      </div>
+
+      <div style="text-align: center;">
+        <button class="add-question-btn action-btn" onclick="addQuestion()">
+          ➕ Magdagdag ng Tanong
+        </button>
+      </div>
+
+      <div style="text-align: center;">
+        <button class="save-btn" onclick="saveQuestions()" id="save-btn">
+          💾 I-save ang Mga Pagbabago
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+// Firebase imports
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where, orderBy, limit, setDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyD9khDPPquuztCUWLfzithwPmQFpI8t49g",
+  authDomain: "wikahusayan-quest.firebaseapp.com",
+  projectId: "wikahusayan-quest",
+  storageBucket: "wikahusayan-quest.firebasestorage.app",
+  messagingSenderId: "744849133114",
+  appId: "1:744849133114:web:31c5f34bc1ace7e3a5ef03"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Game state
+let currentUser = null;
+let isAuthenticated = false;
+let questions = [
+  {
+    title: "Pangngalan",
+    sentence: "Ang demokrasya ay patuloy na hinuhubog ng mamamayan sa pamamagitan ng pakikilahok.",
+    question: "Tukuyin mula sa pangungusap ang pangngalan.",
+    options: ["demokrasya, mamamayan, pakikilahok", "hinuhubog, patuloy", "ang, ng, sa", "ay, na"],
+    correct: 0,
+    isMultipleChoice: true
+  },
+  {
+    title: "Panghalip",
+    sentence: "Siya ay nagtungo sa kanilang tahanan upang makita niya ang kanyang pamilya.",
+    question: "Ano ang mga panghalip sa pangungusap?",
+    options: ["nagtungo, makita", "siya, kanilang, niya, kanyang", "tahanan, pamilya", "sa, upang, ang"],
+    correct: 1,
+    isMultipleChoice: true
+  },
+  {
+    title: "Pandiwa",
+    sentence: "Ang mga estudyante ay nag-aral ng mabuti para sa pagsusulit.",
+    question: "Ano ang pandiwa sa pangungusap?",
+    options: ["estudyante, pagsusulit", "mga, ang, ng", "nag-aral", "mabuti, para"],
+    correct: 2,
+    isMultipleChoice: true
+  },
+  {
+    title: "Pang-uri",
+    sentence: "Ang matalinong bata ay sumagot ng tama sa mahirap na tanong.",
+    question: "Tukuyin ang mga pang-uri sa pangungusap.",
+    options: ["matalinong, mahirap", "bata, tanong", "sumagot, tama", "ang, sa, na"],
+    correct: 0,
+    isMultipleChoice: true
+  },
+  {
+    title: "Pang-abay",
+    sentence: "Mabilis na tumakbo ang atleta patungo sa finish line.",
+    question: "Ano ang pang-abay sa pangungusap?",
+    options: ["tumakbo, patungo", "atleta, finish line", "mabilis", "ang, sa, na"],
+    correct: 2,
+    isMultipleChoice: true
+  },
+  {
+    title: "Pang-ukol",
+    sentence: "Pumunta kami sa paaralan para sa graduation ceremony.",
+    question: "Tukuyin ang mga pang-ukol sa pangungusap.",
+    options: ["pumunta, graduation", "kami, paaralan, ceremony", "sa, para sa", "ang, ng"],
+    correct: 2,
+    isMultipleChoice: true
+  },
+  {
+    title: "Pangatnig",
+    sentence: "Mag-aral ka ng mabuti at makakakuha ka ng mataas na marka.",
+    question: "Ano ang pangatnig sa pangungusap?",
+    options: ["mag-aral, makakakuha", "mabuti, mataas", "at", "ka, ng, na"],
+    correct: 2,
+    isMultipleChoice: true
+  },
+  {
+    title: "Pandamdam",
+    sentence: "Wow! Napakaganda ng inyong proyekto sa klase.",
+    question: "Ano ang pandamdam sa pangungusap?",
+    options: ["napakaganda, proyekto", "wow", "inyong, klase", "ng, sa"],
+    correct: 1,
+    isMultipleChoice: true
+  }
+];
+let questionsDocId = null; // Separate variable for document ID
+
+// Monitor auth state
+onAuthStateChanged(auth, (user) => {
+  console.log('Auth state changed:', user ? 'logged in' : 'logged out');
+  
+  if (!user) {
+    // Not authenticated, redirect to login
+    console.log('Not authenticated, redirecting to login');
+    window.location.href = '../../public/index.html';
+    return;
+  }
+  
+  currentUser = user;
+  isAuthenticated = true;
+
+  // Show content when authenticated
+  document.getElementById('loading-message').style.display = 'none';
+  document.getElementById('main-content').style.display = 'block';
+  
+  // Load questions
+  loadQuestions();
+});
+
+// Load questions from Firebase
+async function loadQuestions() {
+  try {
+    showStatus('Loading questions...', 'info');
+
+    if (isAuthenticated && currentUser) {
+      const docId = `ladder_quiz_${currentUser.uid}`;
+      const docRef = doc(db, 'game_content', docId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        questions = docSnap.data().content.questions;
+        questionsDocId = docId;
+        showStatus('Questions loaded from Firebase!', 'success');
+      } else {
+        // Try localStorage fallback
+        const localData = localStorage.getItem('ladder_quiz_questions');
+        if (localData) {
+          questions = JSON.parse(localData);
+          showStatus('Questions loaded from local storage', 'success');
+        } else {
+          showStatus('Using default questions', 'info');
+        }
+      }
+    } else {
+      // Not authenticated, try localStorage
+      const localData = localStorage.getItem('ladder_quiz_questions');
+      if (localData) {
+        questions = JSON.parse(localData);
+        showStatus('Questions loaded from local storage (offline mode)', 'success');
+      } else {
+        showStatus('Using default questions (offline mode)', 'info');
+      }
+    }
+
+    renderQuestions();
+    hideStatus();
+  } catch (error) {
+    console.error('Error loading questions:', error);
+    showStatus('Error loading questions, using defaults', 'error');
+    
+    // Fallback to localStorage
+    const localData = localStorage.getItem('ladder_quiz_questions');
+    if (localData) {
+      try {
+        questions = JSON.parse(localData);
+        showStatus('Questions loaded from local storage', 'success');
+      } catch (parseError) {
+        console.error('Error parsing local storage data:', parseError);
+      }
+    }
+    
+    renderQuestions();
+  }
+}
+
+// Render questions
+function renderQuestions() {
+  const container = document.getElementById('question-list');
+  container.innerHTML = '';
+
+  questions.forEach((q, index) => {
+    const questionElement = document.createElement('div');
+    questionElement.className = 'question-item';
+
+    questionElement.innerHTML = `
+      <div class="question-item-header">
+        <div class="question-item-number">Step ${index + 1}:</div>
+        <input type="text" class="title-input" placeholder="Ilagay ang pamagat ng step..." value="${q.title}" onchange="updateTitle(${index}, this.value)">
+        <div class="question-item-actions">
+          ${questions.length > 5 ? `<button class="action-btn delete-btn" onclick="deleteQuestion(${index})">🗑️ Tanggalin</button>` : ''}
+        </div>
+      </div>
+
+      <div class="question-type-toggle">
+        <label>Uri ng Tanong:</label>
+        <label class="toggle-switch">
+          <input type="checkbox" ${q.isMultipleChoice ? 'checked' : ''} onchange="toggleQuestionType(${index}, this.checked)">
+          <span class="slider"></span>
+        </label>
+        <span>${q.isMultipleChoice ? 'Multiple Choice' : 'Text Input'}</span>
+      </div>
+
+      <input type="text" class="sentence-input" placeholder="Ilagay ang pangungusap..." value="${q.sentence}" onchange="updateSentence(${index}, this.value)">
+      <input type="text" class="question-input" placeholder="Ilagay ang tanong..." value="${q.question}" onchange="updateQuestion(${index}, this.value)">
+
+      ${q.isMultipleChoice ? `
+        <div class="options-container">
+          <h4 style="color: #555; margin-bottom: 10px;">Mga Opsiyon:</h4>
+          ${q.options.map((option, optIndex) => `
+            <div class="option-item">
+              <input type="radio" name="correct-${index}" value="${optIndex}" ${q.correct === optIndex ? 'checked' : ''} onchange="updateCorrect(${index}, ${optIndex})" class="option-radio">
+              <input type="text" class="option-input" placeholder="Ilagay ang opsiyon..." value="${option}" onchange="updateOption(${index}, ${optIndex}, this.value)">
+            </div>
+          `).join('')}
+        </div>
+      ` : `
+        <div class="options-container">
+          <h4 style="color: #555; margin-bottom: 10px;">Tamang Sagot:</h4>
+          <input type="text" class="option-input" placeholder="Ilagay ang tamang sagot..." value="${q.correctAnswer || ''}" onchange="updateCorrectAnswer(${index}, this.value)">
+        </div>
+      `}
+    `;
+
+    container.appendChild(questionElement);
+  });
+}
+
+// Add new question
+function addQuestion() {
+  questions.push({
+    title: "Bagong Step",
+    sentence: "Ilagay ang pangungusap dito.",
+    question: "Ilagay ang tanong dito.",
+    options: ["Opsiyon 1", "Opsiyon 2", "Opsiyon 3", "Opsiyon 4"],
+    correct: 0,
+    isMultipleChoice: true
+  });
+  renderQuestions();
+}
+
+// Toggle question type
+function toggleQuestionType(index, isMultipleChoice) {
+  questions[index].isMultipleChoice = isMultipleChoice;
+  if (isMultipleChoice) {
+    // Convert to multiple choice
+    questions[index].options = ["Opsiyon 1", "Opsiyon 2", "Opsiyon 3", "Opsiyon 4"];
+    questions[index].correct = 0;
+    delete questions[index].correctAnswer;
+  } else {
+    // Convert to text input
+    questions[index].correctAnswer = "";
+    delete questions[index].options;
+    delete questions[index].correct;
+  }
+  renderQuestions();
+}
+
+// Update functions
+function updateTitle(index, value) {
+  questions[index].title = value;
+}
+
+function updateSentence(index, value) {
+  questions[index].sentence = value;
+}
+
+function updateQuestion(index, value) {
+  questions[index].question = value;
+}
+
+function updateOption(qIndex, optIndex, value) {
+  if (questions[qIndex].options) {
+    questions[qIndex].options[optIndex] = value;
+  }
+}
+
+function updateCorrect(qIndex, correctIndex) {
+  questions[qIndex].correct = correctIndex;
+}
+
+function updateCorrectAnswer(index, value) {
+  questions[index].correctAnswer = value;
+}
+
+// Delete question
+function deleteQuestion(index) {
+  if (questions.length > 5) {
+    if (confirm('Sigurado ka bang tanggalin ang step na ito?')) {
+      questions.splice(index, 1);
+      renderQuestions();
+    }
+  } else {
+    showStatus('Kailangan ang kahit 5 steps sa ladder quiz', 'error');
+  }
+}
+
+// Save questions to Firebase
+async function saveQuestions() {
+  const saveBtn = document.getElementById('save-btn');
+  const originalText = saveBtn.innerHTML;
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = 'Saving... <div class="loading"></div>';
+
+  try {
+    showStatus('Saving questions...', 'info');
+
+    if (isAuthenticated && currentUser) {
+      const contentData = {
+        gameType: 'ladder_quiz',
+        teacherId: currentUser.uid,
+        content: { questions: questions },
+        updatedAt: new Date(),
+        createdAt: new Date()
+      };
+
+      console.log('Saving contentData:', contentData);
+      console.log('Questions to save:', questions);
+
+      const docId = `ladder_quiz_${currentUser.uid}`;
+      console.log('Saving to document ID:', docId);
+      const docRef = doc(db, 'game_content', docId);
+
+      await setDoc(docRef, contentData);
+      console.log('Successfully saved to Firebase');
+
+      // Verify the save by reading it back
+      const verifyDoc = await getDoc(docRef);
+      if (verifyDoc.exists()) {
+        console.log('Verification: Document saved correctly', verifyDoc.data());
+      } else {
+        console.error('Verification: Document not found after save');
+      }
+
+      questionsDocId = docId;
+      showStatus('Questions saved successfully!', 'success');
+    } else {
+      // Save to localStorage as fallback
+      localStorage.setItem('ladder_quiz_questions', JSON.stringify(questions));
+      showStatus('Questions saved to local storage (offline mode)', 'success');
+    }
+
+    saveBtn.innerHTML = originalText;
+    saveBtn.disabled = false;
+
+  } catch (error) {
+    console.error('Error saving questions:', error);
+    // Fallback to localStorage
+    localStorage.setItem('ladder_quiz_questions', JSON.stringify(questions));
+    showStatus('Questions saved to local storage due to error', 'warning');
+    saveBtn.innerHTML = originalText;
+    saveBtn.disabled = false;
+  }
+}
+
+// Status message functions
+function showStatus(message, type) {
+  hideStatus();
+  const statusDiv = document.createElement('div');
+  statusDiv.className = `status-message status-${type}`;
+  statusDiv.textContent = message;
+  document.body.appendChild(statusDiv);
+
+  setTimeout(() => {
+    hideStatus();
+  }, 3000);
+}
+
+function hideStatus() {
+  const existing = document.querySelector('.status-message');
+  if (existing) {
+    existing.remove();
+  }
+}
+
+// Make functions globally accessible
+window.addQuestion = addQuestion;
+window.toggleQuestionType = toggleQuestionType;
+window.updateTitle = updateTitle;
+window.updateSentence = updateSentence;
+window.updateQuestion = updateQuestion;
+window.updateOption = updateOption;
+window.updateCorrect = updateCorrect;
+window.updateCorrectAnswer = updateCorrectAnswer;
+window.deleteQuestion = deleteQuestion;
+window.saveQuestions = saveQuestions;
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  // Firebase auth will handle loading and rendering
+});
+</script>
+</body>
+</html>
