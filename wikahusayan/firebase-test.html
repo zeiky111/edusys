@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Integration Example - Wikahusayan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Poppins', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            margin: 20px 0;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .success { background: rgba(67, 233, 123, 0.2); color: #43e97b; }
+        .error { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
+        .info { background: rgba(79, 172, 254, 0.2); color: #4facfe; }
+        button {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: 600;
+        }
+        .info-box {
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%);
+            border: 1px solid rgba(79, 172, 254, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .info-box h3 { color: #4facfe; margin-bottom: 10px; }
+        .info-box ul { margin: 10px 0; padding-left: 20px; }
+        .info-box li { margin: 5px 0; }
+        .info-box code {
+            background: rgba(0,0,0,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        input::placeholder, textarea::placeholder { color: rgba(255, 255, 255, 0.7); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 Firebase Integration Test</h1>
+        <p>This page demonstrates Firebase Authentication and Firestore integration for Wikahusayan.</p>
+        <div class="info-box">
+            <h3>🎓 Student Registration & Login Test</h3>
+            <p><strong>How it works:</strong> Students only need their name to register/login. The system creates a unique email and uses a default password.</p>
+            <ul>
+                <li>Registration: Name + Grade Level (Grade 12 only)</li>
+                <li>Login: Name only (no password needed)</li>
+                <li>Generated email format: name@student.wikahusayan.com</li>
+            </ul>
+        </div>
+
+        <!-- Student Test Section -->
+        <div class="container">
+            <h2>🎓 Student Registration & Login Test</h2>
+
+            <h3>Register Student</h3>
+            <input type="text" id="student-reg-name" placeholder="Student Full Name (e.g., Juan dela Cruz)">
+            <select id="student-reg-grade">
+                <option value="Grade 12">Grade 12</option>
+            </select>
+            <button onclick="registerStudentTest()">Register Student</button>
+
+            <h3>Login Student</h3>
+            <input type="text" id="student-login-name" placeholder="Student Full Name">
+            <button onclick="loginStudentTest()">Login Student</button>
+
+            <h3>View All Students</h3>
+            <button onclick="loadAllStudents()">Load All Students</button>
+        </div>
+
+        <!-- Leaderboard Test Section -->
+        <div class="container">
+            <h2>🏆 Leaderboard Test</h2>
+            <p>Test the leaderboard system by adding sample data.</p>
+
+            <button onclick="addSampleLeaderboardData()">Add Sample Leaderboard Data</button>
+            <button onclick="clearLeaderboardData()">Clear All Leaderboard Data</button>
+            <button onclick="viewLeaderboardData()">View Leaderboard Data</button>
+
+            <div id="leaderboard-output" style="margin-top: 20px; white-space: pre-wrap; background: rgba(0,0,0,0.1); padding: 10px; border-radius: 8px; font-family: monospace;"></div>
+        </div>
+
+        <div id="status"></div>
+
+        <!-- Firebase Connection Test -->
+        <div class="container">
+            <h2>🔧 Firebase Connection Test</h2>
+            <p><strong>Click this first</strong> to check if your Firebase configuration is working:</p>
+            <button onclick="testFirebaseConnection()" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);">Test Firebase Connection</button>
+
+            <div class="info-box">
+                <h3>❌ If you get "configuration-not-found" error:</h3>
+                <ol>
+                    <li>Go to <a href="https://console.firebase.google.com" target="_blank">Firebase Console</a></li>
+                    <li>Select your project "wikahusayan-quest"</li>
+                    <li>Go to <strong>Project Settings</strong> (gear icon)</li>
+                    <li>Scroll down to <strong>Your apps</strong> section</li>
+                    <li>Click on your <strong>Web app</strong> (</> icon)</li>
+                    <li>Copy the <strong>firebaseConfig</strong> object</li>
+                    <li>Replace the config in this file with the correct one</li>
+                </ol>
+
+                <h3>🔥 Also make sure these are enabled:</h3>
+                <ul>
+                    <li><strong>Authentication:</strong> Go to Authentication → Sign-in method → Enable <strong>Email/Password</strong></li>
+                    <li><strong>Firestore:</strong> Go to Firestore Database → Create database (if not already created)</li>
+                    <li><strong>Authorized domains:</strong> Authentication → Settings → Authorized domains → Add your domain (localhost, etc.)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Authentication Section -->
+        <div class="container">
+            <h2>Authentication</h2>
+            <div id="auth-section">
+                <input type="email" id="email" placeholder="Email" required>
+                <input type="password" id="password" placeholder="Password" required>
+                <button onclick="signUp()">Sign Up</button>
+                <button onclick="signIn()">Sign In</button>
+                <button onclick="signOutUser()">Sign Out</button>
+            </div>
+            <div id="user-info" style="display: none;">
+                <p>Logged in as: <span id="user-email"></span></p>
+            </div>
+        </div>
+
+        <!-- Database Section -->
+        <div class="container">
+            <h2>Firestore Database</h2>
+            <div id="db-section" style="display: none;">
+                <h3>Add Lesson Data</h3>
+                <input type="text" id="lesson-title" placeholder="Lesson Title">
+                <textarea id="lesson-content" placeholder="Lesson Content" rows="4"></textarea>
+                <button onclick="saveLesson()">Save Lesson</button>
+
+                <h3>Student Progress</h3>
+                <input type="text" id="student-id" placeholder="Student ID">
+                <input type="text" id="progress-lesson" placeholder="Lesson ID">
+                <input type="number" id="progress-score" placeholder="Progress Score (0-100)">
+                <button onclick="saveProgress()">Save Progress</button>
+
+                <h3>Load Data</h3>
+                <button onclick="loadLessons()">Load All Lessons</button>
+                <button onclick="loadProgress()">Load Student Progress</button>
+                <div id="data-output"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, where, setDoc, getDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9khDPPquuztCUWLfzithwPmQFpI8t49g",
+            authDomain: "wikahusayan-quest.firebaseapp.com",
+            projectId: "wikahusayan-quest",
+            storageBucket: "wikahusayan-quest.firebasestorage.app",
+            messagingSenderId: "744849133114",
+            appId: "1:744849133114:web:31c5f34bc1ace7e3a5ef03"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // DOM elements
+        const statusDiv = document.getElementById('status');
+        const authSection = document.getElementById('auth-section');
+        const userInfo = document.getElementById('user-info');
+        const userEmail = document.getElementById('user-email');
+        const dbSection = document.getElementById('db-section');
+        const dataOutput = document.getElementById('data-output');
+
+        // Test Firebase connection
+        window.testFirebaseConnection = async function() {
+            try {
+                showStatus('Testing Firebase connection...', 'info');
+
+                // Try to get current user (this will fail if config is wrong)
+                const currentUser = auth.currentUser;
+                showStatus('✅ Firebase initialized successfully! Config is valid.', 'success');
+
+                // Test Firestore connection
+                const testQuery = query(collection(db, 'users'));
+                const testSnapshot = await getDocs(testQuery);
+                showStatus('✅ Firestore connection successful!', 'success');
+
+            } catch (error) {
+                console.error('Firebase test error:', error);
+                showStatus(`❌ Firebase Error: ${error.message}`, 'error');
+
+                if (error.message.includes('configuration-not-found')) {
+                    showStatus('🔧 SOLUTION: Your Firebase project may not exist or services not enabled. Check steps below.', 'error');
+                } else if (error.message.includes('permission-denied')) {
+                    showStatus('🔧 SOLUTION: Firestore security rules may be blocking access.', 'error');
+                }
+            }
+        };
+
+        // Show status message
+        function showStatus(message, type = 'info') {
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+            setTimeout(() => statusDiv.innerHTML = '', 5000);
+        }
+
+        // Authentication functions
+        window.signUp = async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                showStatus(`User created: ${userCredential.user.email}`, 'success');
+            } catch (error) {
+                showStatus(`Sign up error: ${error.message}`, 'error');
+            }
+        };
+
+        window.signIn = async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                showStatus(`Signed in: ${userCredential.user.email}`, 'success');
+            } catch (error) {
+                showStatus(`Sign in error: ${error.message}`, 'error');
+            }
+        };
+
+        window.signOutUser = async function() {
+            try {
+                await signOut(auth);
+                showStatus('Signed out successfully', 'success');
+            } catch (error) {
+                showStatus(`Sign out error: ${error.message}`, 'error');
+            }
+        };
+
+        // Database functions
+        window.saveLesson = async function() {
+            const title = document.getElementById('lesson-title').value;
+            const content = document.getElementById('lesson-content').value;
+
+            if (!title || !content) {
+                showStatus('Please fill in both title and content', 'error');
+                return;
+            }
+
+            try {
+                const docRef = await addDoc(collection(db, 'lessons'), {
+                    title,
+                    content,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                });
+                showStatus(`Lesson saved with ID: ${docRef.id}`, 'success');
+                document.getElementById('lesson-title').value = '';
+                document.getElementById('lesson-content').value = '';
+            } catch (error) {
+                showStatus(`Save error: ${error.message}`, 'error');
+            }
+        };
+
+        window.saveProgress = async function() {
+            const studentId = document.getElementById('student-id').value;
+            const lessonId = document.getElementById('progress-lesson').value;
+            const score = parseInt(document.getElementById('progress-score').value);
+
+            if (!studentId || !lessonId || isNaN(score)) {
+                showStatus('Please fill in all progress fields', 'error');
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, 'progress'), {
+                    studentId,
+                    lessonId,
+                    score,
+                    completedAt: new Date()
+                });
+                showStatus('Progress saved successfully', 'success');
+                document.getElementById('student-id').value = '';
+                document.getElementById('progress-lesson').value = '';
+                document.getElementById('progress-score').value = '';
+            } catch (error) {
+                showStatus(`Save error: ${error.message}`, 'error');
+            }
+        };
+
+        window.loadLessons = async function() {
+            try {
+                const querySnapshot = await getDocs(collection(db, 'lessons'));
+                let output = '<h4>All Lessons:</h4>';
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    output += `<div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                        <strong>${data.title}</strong><br>
+                        ${data.content}<br>
+                        <small>Created: ${data.createdAt?.toDate()?.toLocaleString()}</small>
+                    </div>`;
+                });
+                dataOutput.innerHTML = output;
+            } catch (error) {
+                showStatus(`Load error: ${error.message}`, 'error');
+            }
+        };
+
+        window.loadProgress = async function() {
+            const studentId = document.getElementById('student-id').value;
+            if (!studentId) {
+                showStatus('Please enter a student ID', 'error');
+                return;
+            }
+
+            try {
+                const q = query(collection(db, 'progress'), where('studentId', '==', studentId));
+                const querySnapshot = await getDocs(q);
+                let output = `<h4>Progress for Student: ${studentId}</h4>`;
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    output += `<div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                        Lesson: ${data.lessonId} - Score: ${data.score}%<br>
+                        <small>Completed: ${data.completedAt?.toDate()?.toLocaleString()}</small>
+                    </div>`;
+                });
+                dataOutput.innerHTML = output;
+            } catch (error) {
+                showStatus(`Load error: ${error.message}`, 'error');
+            }
+        };
+
+        // Student registration and login test functions
+        window.registerStudentTest = async function() {
+            const name = document.getElementById('student-reg-name').value.trim();
+            const grade = document.getElementById('student-reg-grade').value;
+
+            if (!name || !grade) {
+                showStatus('Please fill in both name and grade', 'error');
+                return;
+            }
+
+            try {
+                // Generate student email from name
+                const studentEmail = `${name.toLowerCase().replace(/\s+/g, '.')}@student.wikahusayan.com`;
+                const defaultPassword = 'student123';
+
+                showStatus(`🔄 Step 1: Creating Firebase Auth account for ${studentEmail}...`, 'info');
+
+                // Create Firebase Auth account
+                const userCredential = await createUserWithEmailAndPassword(auth, studentEmail, defaultPassword);
+                const user = userCredential.user;
+
+                showStatus(`✅ Step 1 Complete: Auth account created for ${user.email}`, 'success');
+
+                // Wait a moment
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                showStatus(`🔄 Step 2: Saving user data to Firestore...`, 'info');
+
+                // Save user data to Firestore
+                await setDoc(doc(db, 'users', user.uid), {
+                    name: name,
+                    email: studentEmail,
+                    role: 'student',
+                    grade: grade,
+                    createdAt: new Date().toISOString(),
+                    uid: user.uid
+                });
+
+                showStatus(`✅ Step 2 Complete: User data saved to Firestore`, 'success');
+
+                // Clear form
+                document.getElementById('student-reg-name').value = '';
+                document.getElementById('student-reg-grade').value = '';
+
+                showStatus(`🎉 SUCCESS: Student "${name}" registered successfully!`, 'success');
+
+            } catch (error) {
+                console.error('Registration error:', error);
+
+                // Detailed error handling
+                if (error.code === 'auth/email-already-in-use') {
+                    showStatus(`❌ ERROR: Student "${name}" is already registered. Try logging in instead.`, 'error');
+                } else if (error.code === 'auth/invalid-email') {
+                    showStatus(`❌ ERROR: Invalid email format generated: ${studentEmail}`, 'error');
+                } else if (error.code === 'auth/weak-password') {
+                    showStatus(`❌ ERROR: Password too weak (shouldn't happen with default password)`, 'error');
+                } else if (error.code === 'auth/operation-not-allowed') {
+                    showStatus(`❌ ERROR: Email/Password authentication not enabled in Firebase Console!`, 'error');
+                } else if (error.code === 'permission-denied') {
+                    showStatus(`❌ ERROR: Firestore permission denied. Check security rules!`, 'error');
+                } else if (error.code === 'unavailable') {
+                    showStatus(`❌ ERROR: Firestore service unavailable. Database may not be created!`, 'error');
+                } else {
+                    showStatus(`❌ REGISTRATION ERROR: ${error.code} - ${error.message}`, 'error');
+                }
+            }
+        };
+
+        window.loginStudentTest = async function() {
+            const name = document.getElementById('student-login-name').value.trim();
+
+            if (!name) {
+                showStatus('Please enter student name', 'error');
+                return;
+            }
+
+            try {
+                // Generate student email from name
+                const studentEmail = `${name.toLowerCase().replace(/\s+/g, '.')}@student.wikahusayan.com`;
+                const defaultPassword = 'student123';
+
+                showStatus(`🔄 Logging in ${name} with email: ${studentEmail}`, 'info');
+
+                // Sign in with Firebase Auth
+                const userCredential = await signInWithEmailAndPassword(auth, studentEmail, defaultPassword);
+                const user = userCredential.user;
+
+                showStatus(`✅ Auth login successful for: ${user.email}`, 'success');
+
+                // Wait a moment
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                showStatus(`🔄 Retrieving user data from Firestore...`, 'info');
+
+                // Get user data from Firestore
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    showStatus(`✅ Login successful! Welcome ${userData.name} (Grade ${userData.grade})`, 'success');
+
+                    // Store session data (like in the main app)
+                    sessionStorage.setItem('studentName', userData.name);
+                    sessionStorage.setItem('studentEmail', userData.email);
+                    sessionStorage.setItem('studentGrade', userData.grade);
+                    sessionStorage.setItem('userRole', 'student');
+                    sessionStorage.setItem('userId', user.uid);
+
+                } else {
+                    showStatus('❌ ERROR: User data not found in database', 'error');
+                }
+
+                // Clear form
+                document.getElementById('student-login-name').value = '';
+
+            } catch (error) {
+                console.error('Login error:', error);
+
+                // Detailed error handling
+                if (error.code === 'auth/user-not-found') {
+                    showStatus(`❌ ERROR: Student "${name}" not found. Please register first.`, 'error');
+                } else if (error.code === 'auth/wrong-password') {
+                    showStatus(`❌ ERROR: Wrong password (shouldn't happen with default password)`, 'error');
+                } else if (error.code === 'auth/invalid-email') {
+                    showStatus(`❌ ERROR: Invalid email format: ${studentEmail}`, 'error');
+                } else if (error.code === 'auth/user-disabled') {
+                    showStatus(`❌ ERROR: Account disabled`, 'error');
+                } else if (error.code === 'permission-denied') {
+                    showStatus(`❌ ERROR: Cannot read user data. Check Firestore security rules!`, 'error');
+                } else {
+                    showStatus(`❌ LOGIN ERROR: ${error.code} - ${error.message}`, 'error');
+                }
+            }
+        };
+
+        window.loadAllStudents = async function() {
+            try {
+                const q = query(collection(db, 'users'), where('role', '==', 'student'));
+                const querySnapshot = await getDocs(q);
+                let output = '<h4>All Registered Students:</h4>';
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    output += `<div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                        <strong>${data.name}</strong> - Grade ${data.grade}<br>
+                        <small>Email: ${data.email}<br>Registered: ${new Date(data.createdAt).toLocaleString()}</small>
+                    </div>`;
+                });
+                if (querySnapshot.empty) {
+                    output += '<p>No students registered yet.</p>';
+                }
+                dataOutput.innerHTML = output;
+                showStatus(`Found ${querySnapshot.size} students`, 'info');
+            } catch (error) {
+                showStatus(`Load error: ${error.message}`, 'error');
+            }
+        };
+
+        // Teacher registration and login test functions
+        window.registerTeacherTest = async function() {
+            const name = document.getElementById('teacher-reg-name').value.trim();
+            const email = document.getElementById('teacher-reg-email').value.trim();
+            const password = document.getElementById('teacher-reg-password').value.trim();
+
+            if (!name || !email || !password) {
+                showStatus('Please fill in all fields (name, email, password)', 'error');
+                return;
+            }
+
+            try {
+                showStatus(`🔄 Step 1: Creating Firebase Auth account for ${email}...`, 'info');
+
+                // Create Firebase Auth account
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                showStatus(`✅ Step 1 Complete: Auth account created for ${user.email}`, 'success');
+
+                // Wait a moment
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                showStatus(`🔄 Step 2: Saving teacher data to Firestore...`, 'info');
+
+                // Save user data to Firestore
+                await setDoc(doc(db, 'users', user.uid), {
+                    name: name,
+                    email: email,
+                    role: 'teacher',
+                    createdAt: new Date().toISOString(),
+                    uid: user.uid
+                });
+
+                showStatus(`✅ Step 2 Complete: Teacher data saved to Firestore`, 'success');
+
+                // Clear form
+                document.getElementById('teacher-reg-name').value = '';
+                document.getElementById('teacher-reg-email').value = '';
+                document.getElementById('teacher-reg-password').value = '';
+
+                showStatus(`🎉 SUCCESS: Teacher "${name}" registered successfully!`, 'success');
+
+            } catch (error) {
+                console.error('Teacher registration error:', error);
+
+                // Detailed error handling
+                if (error.code === 'auth/email-already-in-use') {
+                    showStatus(`❌ ERROR: Email "${email}" is already registered. Try logging in instead.`, 'error');
+                } else if (error.code === 'auth/invalid-email') {
+                    showStatus(`❌ ERROR: Invalid email format: ${email}`, 'error');
+                } else if (error.code === 'auth/weak-password') {
+                    showStatus(`❌ ERROR: Password too weak. Must be at least 6 characters.`, 'error');
+                } else if (error.code === 'auth/operation-not-allowed') {
+                    showStatus(`❌ ERROR: Email/Password authentication not enabled in Firebase Console!`, 'error');
+                } else if (error.code === 'permission-denied') {
+                    showStatus(`❌ ERROR: Firestore permission denied. Check security rules!`, 'error');
+                } else if (error.code === 'unavailable') {
+                    showStatus(`❌ ERROR: Firestore service unavailable. Database may not be created!`, 'error');
+                } else {
+                    showStatus(`❌ REGISTRATION ERROR: ${error.code} - ${error.message}`, 'error');
+                }
+            }
+        };
+
+        window.viewLeaderboardData = async function() {
+            try {
+                showStatus('🔄 Loading leaderboard data...', 'info');
+
+                const leaderboardRef = collection(db, 'leaderboard');
+                const q = query(leaderboardRef, orderBy('totalPoints', 'desc'));
+                const querySnapshot = await getDocs(q);
+
+                let output = `📊 LEADERBOARD DATA (${querySnapshot.size} entries):\n\n`;
+
+                if (querySnapshot.empty) {
+                    output += 'No leaderboard data found.';
+                } else {
+                    let rank = 1;
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        output += `${rank}. ${data.displayName || 'Anonymous'} (${data.groupName || 'No Group'})\n`;
+                        output += `   Total Points: ${data.totalPoints || 0}\n`;
+                        output += `   Matching Points: ${data.matchingPoints || 0}\n`;
+                        output += `   Badges: ${data.badges ? data.badges.join(', ') : 'None'}\n\n`;
+                        rank++;
+                    });
+                }
+
+                document.getElementById('leaderboard-output').textContent = output;
+                showStatus('✅ Leaderboard data loaded successfully', 'success');
+
+            } catch (error) {
+                console.error('Error viewing leaderboard:', error);
+                showStatus(`❌ Error viewing leaderboard: ${error.message}`, 'error');
+                document.getElementById('leaderboard-output').textContent = `Error: ${error.message}`;
+            }
+        };
+
+        window.addSampleLeaderboardData = async function() {
+            try {
+                showStatus('🔄 Adding sample leaderboard data...', 'info');
+
+                const sampleData = [
+                    {
+                        userId: 'sample1',
+                        displayName: 'Maria Santos',
+                        groupName: 'Group A',
+                        totalPoints: 250,
+                        matchingPoints: 0, // Only played ladder/quiz
+                        quizPoints: 150,
+                        ladderPoints: 100,
+                        badges: ['First Steps', 'Speed Demon'],
+                        lastUpdated: new Date()
+                    },
+                    {
+                        userId: 'sample2',
+                        displayName: 'Juan dela Cruz',
+                        groupName: 'Group B',
+                        totalPoints: 180,
+                        matchingPoints: 0, // Only played ladder/quiz
+                        quizPoints: 80,
+                        ladderPoints: 100,
+                        badges: ['First Steps'],
+                        lastUpdated: new Date()
+                    },
+                    {
+                        userId: 'sample3',
+                        displayName: 'Ana Reyes',
+                        groupName: 'Group A',
+                        totalPoints: 320,
+                        matchingPoints: 0, // Only played ladder/quiz
+                        quizPoints: 200,
+                        ladderPoints: 120,
+                        badges: ['First Steps', 'Speed Demon', 'Century Club'],
+                        lastUpdated: new Date()
+                    },
+                    {
+                        userId: 'sample4',
+                        displayName: 'Pedro Garcia',
+                        groupName: 'Group C',
+                        totalPoints: 95,
+                        matchingPoints: 95, // Only played drag & drop
+                        quizPoints: 0,
+                        ladderPoints: 0,
+                        badges: ['First Steps'],
+                        lastUpdated: new Date()
+                    },
+                    {
+                        userId: 'sample5',
+                        displayName: 'Rosa Mendoza',
+                        groupName: 'Group B',
+                        totalPoints: 410,
+                        matchingPoints: 0, // Only played ladder/quiz
+                        quizPoints: 250,
+                        ladderPoints: 160,
+                        badges: ['First Steps', 'Speed Demon', 'Century Club', 'Champion'],
+                        lastUpdated: new Date()
+                    },
+                    {
+                        userId: 'sample6',
+                        displayName: 'Carlos Lopez',
+                        groupName: 'Group A',
+                        totalPoints: 75,
+                        matchingPoints: 75, // Only played drag & drop
+                        quizPoints: 0,
+                        ladderPoints: 0,
+                        badges: [],
+                        lastUpdated: new Date()
+                    }
+                ];
+
+                for (const data of sampleData) {
+                    await setDoc(doc(db, 'leaderboard', data.userId), data);
+                }
+
+                showStatus('✅ Sample leaderboard data added successfully!', 'success');
+                document.getElementById('leaderboard-output').textContent = 'Sample data added. Click "View Leaderboard Data" to see it.';
+
+            } catch (error) {
+                console.error('Error adding sample data:', error);
+                showStatus(`❌ Error adding sample data: ${error.message}`, 'error');
+            }
+        };
+
+        window.clearLeaderboardData = async function() {
+            try {
+                showStatus('🔄 Clearing leaderboard data...', 'info');
+
+                const leaderboardRef = collection(db, 'leaderboard');
+                const querySnapshot = await getDocs(leaderboardRef);
+
+                const deletePromises = [];
+                querySnapshot.forEach((doc) => {
+                    deletePromises.push(deleteDoc(doc.ref));
+                });
+
+                await Promise.all(deletePromises);
+
+                showStatus('✅ All leaderboard data cleared!', 'success');
+                document.getElementById('leaderboard-output').textContent = 'Leaderboard data cleared.';
+
+            } catch (error) {
+                console.error('Error clearing leaderboard:', error);
+                showStatus(`❌ Error clearing leaderboard: ${error.message}`, 'error');
+            }
+        };
+    </script>
+</body>
+</html>

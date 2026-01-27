@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ Speed Challenge - Wikahusayan Quest</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .game-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .game-title {
+            text-align: center;
+            color: white;
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: titleGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+            to { text-shadow: 2px 2px 4px rgba(0,0,0,0.3), 0 0 20px rgba(255,255,255,0.5); }
+        }
+
+        .game-subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+        }
+
+        /* Start Screen */
+        .start-screen {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.8s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .difficulty-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .difficulty-btn {
+            padding: 20px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .difficulty-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .difficulty-btn:hover::before {
+            left: 100%;
+        }
+
+        .difficulty-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .easy { background: linear-gradient(135deg, #4CAF50, #45a049); color: white; }
+        .medium { background: linear-gradient(135deg, #FF9800, #e68900); color: white; }
+        .hard { background: linear-gradient(135deg, #f44336, #d32f2f); color: white; }
+
+        .start-challenge-btn {
+            padding: 18px 40px;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .start-challenge-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .start-challenge-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Game Screen */
+        .game-screen {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.8s ease-out;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .timer-container {
+            flex: 1;
+            text-align: center;
+        }
+
+        .timer-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .timer-bar {
+            width: 100%;
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .timer-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #FF9800, #f44336);
+            border-radius: 6px;
+            transition: width 1s linear;
+            position: relative;
+        }
+
+        .timer-progress::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: timerShine 2s ease-in-out infinite;
+        }
+
+        @keyframes timerShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .timer-text {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        .score-streak-container {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .score-display, .streak-display {
+            text-align: center;
+        }
+
+        .score-label, .streak-label {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .score-value, .streak-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .streak-value {
+            color: #FF9800;
+        }
+
+        .question-container {
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .question-number {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .question {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #333;
+            line-height: 1.4;
+            margin-bottom: 20px;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .options {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .option-btn {
+            padding: 18px 20px;
+            font-size: 1rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+            text-align: left;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .option-btn:hover::before {
+            left: 100%;
+        }
+
+        .option-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .option-btn.correct {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            animation: correctPulse 0.6s ease-out;
+        }
+
+        .option-btn.incorrect {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            animation: incorrectShake 0.6s ease-out;
+        }
+
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes incorrectShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .feedback {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            animation: feedbackSlide 0.5s ease-out;
+        }
+
+        @keyframes feedbackSlide {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .feedback.correct {
+            background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+            color: #2e7d32;
+            border: 2px solid #4CAF50;
+        }
+
+        .feedback.incorrect {
+            background: linear-gradient(135deg, #ffebee, #ffcdd2);
+            color: #c62828;
+            border: 2px solid #f44336;
+        }
+
+        /* Game Over Screen */
+        .game-over {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.8s ease-out;
+        }
+
+        .game-over h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .final-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-item {
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .performance-message {
+            font-size: 1.2rem;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .performance-excellent {
+            background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+            color: #2e7d32;
+        }
+
+        .performance-good {
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            color: #ef6c00;
+        }
+
+        .performance-average {
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            color: #ef6c00;
+        }
+
+        .performance-poor {
+            background: linear-gradient(135deg, #ffebee, #ffcdd2);
+            color: #c62828;
+        }
+
+        .game-over-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .game-over-btn {
+            padding: 15px 30px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .play-again-btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .play-again-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .select-game-btn {
+            background: linear-gradient(135deg, #2196F3, #0b7dda);
+            color: white;
+        }
+
+        .select-game-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(33, 150, 243, 0.3);
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Hide/show classes */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 2rem;
+            }
+
+            .game-container {
+                padding: 15px;
+            }
+
+            .start-screen, .game-screen, .game-over {
+                padding: 20px;
+            }
+
+            .question {
+                font-size: 1.2rem;
+            }
+
+            .timer-text {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="select.html" class="back-btn">🏠 Bumalik sa Pili ng Laro</a>
+
+    <div class="game-container">
+        <h1 class="game-title">⚡ Speed Challenge</h1>
+        <p class="game-subtitle">Subukan ang iyong bilis at kaalaman sa wikang Filipino!</p>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="start-screen">
+            <p style="font-size: 1.1rem; margin-bottom: 30px; color: #555;">Pumili ng antas ng kahirapan at simulan ang challenge. Mas mabilis ang sagot, mas mataas ang puntos!</p>
+
+            <div class="difficulty-selection">
+                <button class="difficulty-btn easy" onclick="selectDifficulty('easy')">
+                    <div>
+                        <strong>Madali</strong><br>
+                        <small>15 segundo, 10 tanong</small>
+                    </div>
+                </button>
+                <button class="difficulty-btn medium" onclick="selectDifficulty('medium')">
+                    <div>
+                        <strong>Katamtaman</strong><br>
+                        <small>10 segundo, 15 tanong</small>
+                    </div>
+                </button>
+                <button class="difficulty-btn hard" onclick="selectDifficulty('hard')">
+                    <div>
+                        <strong>Mahirap</strong><br>
+                        <small>8 segundo, 20 tanong</small>
+                    </div>
+                </button>
+            </div>
+
+            <button class="start-challenge-btn" id="start-btn" onclick="startGame()" disabled>
+                Simulan ang Challenge
+            </button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="game-screen hidden">
+            <div class="game-header">
+                <div class="timer-container">
+                    <div class="timer-label">Oras na Natitira</div>
+                    <div class="timer-bar">
+                        <div class="timer-progress" id="timer-progress"></div>
+                    </div>
+                    <div class="timer-text" id="timer-text">10</div>
+                </div>
+
+                <div class="score-streak-container">
+                    <div class="score-display">
+                        <div class="score-label">Puntos</div>
+                        <div class="score-value" id="score">0</div>
+                    </div>
+                    <div class="streak-display">
+                        <div class="streak-label">Streak</div>
+                        <div class="streak-value" id="streak">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="question-container">
+                <div class="question-number" id="question-number">Tanong 1 ng 10</div>
+                <div class="question" id="question">Loading question...</div>
+                <div class="options" id="options"></div>
+            </div>
+
+            <div id="feedback" class="feedback hidden"></div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="game-over" class="game-over hidden">
+            <h2>🎉 Challenge Complete!</h2>
+
+            <div class="final-stats">
+                <div class="stat-item">
+                    <div class="stat-label">Final Score</div>
+                    <div class="stat-value" id="final-score">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Accuracy</div>
+                    <div class="stat-value" id="final-accuracy">0%</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Best Streak</div>
+                    <div class="stat-value" id="final-streak">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Average Time</div>
+                    <div class="stat-value" id="final-avg-time">0s</div>
+                </div>
+            </div>
+
+            <div class="performance-message" id="performance-message"></div>
+
+            <div class="game-over-buttons">
+                <button class="game-over-btn play-again-btn" onclick="resetGame()">Laruin Uli</button>
+                <a href="select.html" class="game-over-btn select-game-btn">Pumili ng Ibang Laro</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase imports for score saving
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9khDPPquuztCUWLfzithwPmQFpI8t49g",
+            authDomain: "wikahusayan-quest.firebaseapp.com",
+            projectId: "wikahusayan-quest",
+            storageBucket: "wikahusayan-quest.firebasestorage.app",
+            messagingSenderId: "744849133114",
+            appId: "1:744849133114:web:31c5f34bc1ace7e3a5ef03"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Save game score function
+        async function saveGameScore(userId, gameType, score, displayName = null, groupName = null) {
+            console.log('🚀 saveGameScore STARTED with:', { userId, gameType, score, displayName, groupName });
+            try {
+                console.log(`🔄 Updating leaderboard for ${gameType} with score: ${score}`);
+
+                const collectionName = gameType === 'speed_challenge' ? 'leaderboard_speed_challenge' : 'leaderboard';
+                const leaderboardRef = collection(db, collectionName);
+                const q = query(leaderboardRef, where('userId', '==', userId));
+                const querySnapshot = await getDocs(q);
+
+                let existingData = null;
+                let docRef = null;
+
+                if (!querySnapshot.empty) {
+                    // Update existing player
+                    docRef = querySnapshot.docs[0].ref;
+                    existingData = querySnapshot.docs[0].data();
+                    console.log('📝 Updating existing player:', existingData.displayName);
+                } else {
+                    // Create new player entry
+                    console.log('🆕 Creating new player entry');
+                }
+
+                // For speed challenge, save the score
+                const updateData = {
+                    userId: userId,
+                    displayName: displayName || existingData?.displayName || 'Anonymous',
+                    groupName: groupName || existingData?.groupName || 'No Group',
+                    score: Math.max(existingData?.score || 0, score),
+                    updatedAt: new Date()
+                };
+
+                updateData.totalPoints = updateData.score;
+                updateData.quizPoints = updateData.score;
+
+                console.log(`⚡ Speed challenge score: ${updateData.score}`);
+
+                // Initialize badges array if not existing
+                if (!existingData?.badges) {
+                    updateData.badges = [];
+                }
+
+                // Check for new badges based on total points
+                const newBadges = checkForNewBadges(updateData.totalPoints, existingData?.badges || []);
+                if (newBadges.length > 0) {
+                    updateData.badges = [...(existingData?.badges || []), ...newBadges];
+                    console.log('🏆 New badges earned:', newBadges);
+                }
+
+                if (docRef) {
+                    // Update existing document
+                    await updateDoc(docRef, updateData);
+                } else {
+                    // Create new document
+                    updateData.createdAt = new Date();
+                    await addDoc(leaderboardRef, updateData);
+                }
+
+                // Also keep a per-user aggregated points document for other parts of the app
+                try {
+                    const userPointsRef = doc(db, 'user_points', userId);
+                    const userPointsData = {
+                        userId: userId,
+                        displayName: updateData.displayName,
+                        groupName: updateData.groupName,
+                        totalPoints: updateData.totalPoints || 0,
+                        ladderPoints: updateData.ladderPoints || 0,
+                        quizPoints: updateData.quizPoints || 0,
+                        matchingPoints: updateData.matchingPoints || 0,
+                        updatedAt: new Date()
+                    };
+
+                    // Use setDoc to create or overwrite the user's points document
+                    await setDoc(userPointsRef, userPointsData, { merge: true });
+                    console.log('✅ user_points document updated for', userId);
+                } catch (err) {
+                    console.error('❌ Failed to update user_points doc:', err);
+                }
+
+                console.log('✅ Leaderboard updated successfully');
+                console.log('🚀 saveGameScore COMPLETED');
+                return updateData;
+            } catch (error) {
+                console.error('❌ Error saving game score:', error);
+                console.error('🚀 saveGameScore FAILED with error:', error.message);
+                throw error;
+            }
+        }
+
+        // Helper function for badge checking
+        function checkForNewBadges(totalPoints, existingBadges) {
+            const newBadges = [];
+
+            const badgeThresholds = [
+                { points: 100, badge: 'Bronze Scholar' },
+                { points: 250, badge: 'Silver Scholar' },
+                { points: 500, badge: 'Gold Scholar' },
+                { points: 1000, badge: 'Platinum Scholar' },
+                { points: 2000, badge: 'Diamond Scholar' },
+                { points: 5000, badge: 'Master Scholar' }
+            ];
+
+            badgeThresholds.forEach(({ points, badge }) => {
+                if (totalPoints >= points && !existingBadges.includes(badge)) {
+                    newBadges.push(badge);
+                }
+            });
+
+            // Special badges for game types
+            if (totalPoints >= 100 && !existingBadges.includes('First Steps')) {
+                newBadges.push('First Steps');
+            }
+
+            if (totalPoints >= 500 && !existingBadges.includes('Knowledge Seeker')) {
+                newBadges.push('Knowledge Seeker');
+            }
+
+            return newBadges;
+        }
+
+
+
+        // Game state
+        let currentDifficulty = null;
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let streak = 0;
+        let bestStreak = 0;
+        let timer = null;
+        let timeLeft = 10;
+        let totalTime = 0;
+        let correctAnswers = 0;
+        let totalQuestions = 10;
+        let questionStartTime = 0;
+        let currentUser = null;
+
+        // Difficulty settings
+        const difficultySettings = {
+            easy: { timeLimit: 15, questions: 10, timeBonus: 5 },
+            medium: { timeLimit: 10, questions: 15, timeBonus: 10 },
+            hard: { timeLimit: 8, questions: 20, timeBonus: 15 }
+        };
+
+        // Enhanced questions database with categories
+        const questionsDatabase = {
+            easy: [],
+            medium: [],
+            hard: []
+        };
+
+        // Monitor auth state
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            // Load questions when auth state changes
+            loadQuestions();
+        });
+
+        // Load questions from Firebase or localStorage
+        async function loadQuestions() {
+            console.log('Starting to load questions...');
+            try {
+                // Try to load from Firebase first (now allowed without auth)
+                const docId = `speed_challenge`;
+                console.log('Trying to load from Firebase document:', docId);
+                const docRef = doc(db, 'game_content', docId);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    console.log('Firebase document exists');
+                    const data = docSnap.data();
+                    console.log('Firebase data:', data);
+                    if (data.content && data.content.questionsData) {
+                        Object.assign(questionsDatabase, data.content.questionsData);
+                        console.log('Loaded questions from Firebase:', questionsDatabase);
+                    } else {
+                        console.log('No questionsData in Firebase data');
+                    }
+                } else {
+                    console.log('No Firebase document found');
+                }
+                
+                // Fallback to localStorage if no Firebase data
+                if (Object.keys(questionsDatabase.easy).length === 0) {
+                    console.log('No questions from Firebase, trying localStorage');
+                    const localData = localStorage.getItem('speed_challenge_questions');
+                    if (localData) {
+                        Object.assign(questionsDatabase, JSON.parse(localData));
+                        console.log('Loaded questions from localStorage:', questionsDatabase);
+                    } else {
+                        console.log('No localStorage data either');
+                    }
+                }
+                
+                // Update button texts with actual counts
+                console.log('Updating difficulty buttons');
+                updateDifficultyButtons();
+                
+            } catch (error) {
+                console.error('Error loading questions:', error);
+                // Fallback to localStorage
+                const localData = localStorage.getItem('speed_challenge_questions');
+                if (localData) {
+                    Object.assign(questionsDatabase, JSON.parse(localData));
+                    console.log('Fallback: loaded from localStorage due to error');
+                }
+                updateDifficultyButtons();
+            }
+        }
+
+        // Update difficulty button texts based on actual question counts
+        function updateDifficultyButtons() {
+            const difficulties = ['easy', 'medium', 'hard'];
+            const labels = ['Madali', 'Katamtaman', 'Mahirap'];
+            
+            difficulties.forEach((diff, index) => {
+                const button = document.querySelector(`.difficulty-btn.${diff}`);
+                if (button) {
+                    const questionCount = questionsDatabase[diff].length;
+                    const timeLimit = difficultySettings[diff].timeLimit;
+                    button.innerHTML = `
+                        <div>
+                            <strong>${labels[index]}</strong><br>
+                            <small>${timeLimit} segundo, ${questionCount} tanong</small>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        // Select difficulty
+        function selectDifficulty(difficulty) {
+            currentDifficulty = difficulty;
+            const buttons = document.querySelectorAll('.difficulty-btn');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            event.target.closest('.difficulty-btn').classList.add('selected');
+
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('start-btn').innerHTML = `Simulan ang ${difficulty === 'easy' ? 'Madaling' : difficulty === 'medium' ? 'Katamtamang' : 'Mahirap na'} Challenge`;
+        }
+
+        // Start game
+        function startGame() {
+            const settings = difficultySettings[currentDifficulty];
+
+            // Shuffle questions for this difficulty
+            const questions = [...questionsDatabase[currentDifficulty]];
+            shuffleArray(questions);
+
+            // Set totalQuestions to actual number of questions available
+            totalQuestions = questions.length;
+            timeLeft = settings.timeLimit;
+
+            // Reset game state
+            currentQuestionIndex = 0;
+            score = 0;
+            streak = 0;
+            bestStreak = 0;
+            totalTime = 0;
+            correctAnswers = 0;
+
+            // Update UI
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+
+            loadQuestion(questions);
+        }
+
+        // Load question
+        function loadQuestion(questions) {
+            if (currentQuestionIndex >= totalQuestions) {
+                endGame();
+                return;
+            }
+
+            const question = questions[currentQuestionIndex];
+            questionStartTime = Date.now();
+
+            // Update UI
+            document.getElementById('question-number').textContent = `Tanong ${currentQuestionIndex + 1} ng ${totalQuestions}`;
+            document.getElementById('question').textContent = question.question;
+            document.getElementById('score').textContent = score;
+            document.getElementById('streak').textContent = streak;
+            document.getElementById('feedback').classList.add('hidden');
+
+            // Create options
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+
+            question.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = option;
+                button.onclick = () => selectAnswer(index, question.correct, questions);
+                optionsContainer.appendChild(button);
+            });
+
+            // Start timer
+            startTimer();
+        }
+
+        // Start timer
+        function startTimer() {
+            const settings = difficultySettings[currentDifficulty];
+            timeLeft = settings.timeLimit;
+            updateTimerDisplay();
+
+            timer = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    handleTimeout();
+                }
+            }, 1000);
+        }
+
+        // Update timer display
+        function updateTimerDisplay() {
+            const settings = difficultySettings[currentDifficulty];
+            const progressPercent = (timeLeft / settings.timeLimit) * 100;
+
+            document.getElementById('timer-text').textContent = timeLeft;
+            document.getElementById('timer-progress').style.width = `${progressPercent}%`;
+
+            // Change color based on time remaining
+            const progressBar = document.getElementById('timer-progress');
+            if (progressPercent > 60) {
+                progressBar.style.background = 'linear-gradient(90deg, #4CAF50, #66BB6A)';
+            } else if (progressPercent > 30) {
+                progressBar.style.background = 'linear-gradient(90deg, #FF9800, #FFB74D)';
+            } else {
+                progressBar.style.background = 'linear-gradient(90deg, #f44336, #EF5350)';
+            }
+        }
+
+        // Handle timeout
+        function handleTimeout() {
+            streak = 0;
+            showFeedback(false, '⏰ Oras na ubos! Walang puntos.');
+            setTimeout(() => {
+                currentQuestionIndex++;
+                const questions = [...questionsDatabase[currentDifficulty]];
+                shuffleArray(questions);
+                loadQuestion(questions);
+            }, 2000);
+        }
+
+        // Select answer
+        function selectAnswer(selectedIndex, correctIndex, questions) {
+            clearInterval(timer);
+
+            const timeTaken = (Date.now() - questionStartTime) / 1000;
+            totalTime += timeTaken;
+
+            const isCorrect = selectedIndex === correctIndex;
+            const settings = difficultySettings[currentDifficulty];
+
+            if (isCorrect) {
+                correctAnswers++;
+                streak++;
+                bestStreak = Math.max(bestStreak, streak);
+
+                // Calculate points: base points + time bonus + streak bonus
+                const basePoints = 100;
+                const timeBonus = Math.max(0, Math.floor((timeLeft / settings.timeLimit) * settings.timeBonus));
+                const streakBonus = Math.floor(streak / 3) * 50; // Bonus every 3 correct answers
+
+                const totalPoints = basePoints + timeBonus + streakBonus;
+                score += totalPoints;
+
+                showFeedback(true, `🎉 Tama! +${totalPoints} puntos (${basePoints} + ${timeBonus} time + ${streakBonus} streak)`);
+            } else {
+                streak = 0;
+                showFeedback(false, '❌ Mali! Streak reset.');
+            }
+
+            // Highlight correct/incorrect answers
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach((btn, index) => {
+                btn.onclick = null; // Disable clicking
+                if (index === correctIndex) {
+                    btn.classList.add('correct');
+                } else if (index === selectedIndex && !isCorrect) {
+                    btn.classList.add('incorrect');
+                }
+            });
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                loadQuestion(questions);
+            }, 2500);
+        }
+
+        // Show feedback
+        function showFeedback(isCorrect, message) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = message;
+            feedback.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
+            feedback.classList.remove('hidden');
+        }
+
+        // End game
+        async function endGame() {
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('game-over').classList.remove('hidden');
+
+            // Calculate final stats
+            const accuracy = Math.round((correctAnswers / totalQuestions) * 100);
+            const avgTime = totalQuestions > 0 ? (totalTime / totalQuestions).toFixed(1) : 0;
+
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-accuracy').textContent = `${accuracy}%`;
+            document.getElementById('final-streak').textContent = bestStreak;
+            document.getElementById('final-avg-time').textContent = `${avgTime}s`;
+
+            // Performance message
+            const performanceMsg = document.getElementById('performance-message');
+            let message = '';
+            let className = '';
+
+            if (accuracy >= 90) {
+                message = '🌟 Napakagaling! Ikaw ay isang eksperto sa wikang Filipino!';
+                className = 'performance-excellent';
+            } else if (accuracy >= 75) {
+                message = '⭐ Mabuti! Magpatuloy ka sa pag-aaral!';
+                className = 'performance-good';
+            } else if (accuracy >= 50) {
+                message = '👍 Katamtaman. May pag-unlad pa!';
+                className = 'performance-average';
+            } else {
+                message = '📚 Kailangan pang pagbutihin. Huwag mawalan ng loob!';
+                className = 'performance-poor';
+            }
+
+            performanceMsg.textContent = message;
+            performanceMsg.className = `performance-message ${className}`;
+
+            // Save to Firebase (allow anonymous)
+            try {
+                // Save detailed game progress (only if logged in)
+                if (currentUser) {
+                    await addDoc(collection(db, 'game_progress'), {
+                        studentId: currentUser.uid,
+                        gameType: 'speed_challenge',
+                        difficulty: currentDifficulty,
+                        score: score,
+                        accuracy: accuracy,
+                        bestStreak: bestStreak,
+                        averageTime: parseFloat(avgTime),
+                        totalQuestions: totalQuestions,
+                        correctAnswers: correctAnswers,
+                        timestamp: new Date()
+                    });
+                }
+
+                // Update leaderboard with points (allow anonymous)
+                const userId = currentUser ? currentUser.uid : getAnonymousUserId();
+                const displayName = currentUser?.displayName || sessionStorage.getItem('studentName') || localStorage.getItem('studentName') || 'Anonymous';
+                const groupName = sessionStorage.getItem('studentGroup') || localStorage.getItem('studentGroup') || 'No Group';
+
+                await saveGameScore(userId, 'speed_challenge', score, displayName, groupName);
+
+                console.log('✅ Speed challenge score saved to leaderboard:', score);
+            } catch (error) {
+                console.error('❌ Error saving score:', error);
+            }
+        }
+
+        // Reset game
+        function resetGame() {
+            document.getElementById('game-over').classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('hidden');
+            document.getElementById('start-btn').disabled = true;
+            currentDifficulty = null;
+
+            // Reset difficulty buttons
+            const buttons = document.querySelectorAll('.difficulty-btn');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+        }
+
+        // Utility function to get anonymous user ID
+        function getAnonymousUserId() {
+            let userId = localStorage.getItem('anonymousUserId');
+            if (!userId) {
+                userId = 'anon_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('anonymousUserId', userId);
+            }
+            return userId;
+        }
+
+        // Utility function to shuffle array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Make functions globally accessible
+        window.selectDifficulty = selectDifficulty;
+        window.startGame = startGame;
+        window.resetGame = resetGame;
+
+        // Update difficulty buttons on page load
+        updateDifficultyButtons();
+    </script>
+</body>
+</html>

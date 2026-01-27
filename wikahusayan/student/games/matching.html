@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag & Drop Puzzle - Wikahusayan Quest</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script type="module">
+// Firebase imports
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+import { getFirestore, collection, getDocs, doc, setDoc, getDoc, addDoc, updateDoc, query, where } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyD9khDPPquuztCUWLfzithwPmQFpI8t49g",
+  authDomain: "wikahusayan-quest.firebaseapp.com",
+  projectId: "wikahusayan-quest",
+  storageBucket: "wikahusayan-quest.firebasestorage.app",
+  messagingSenderId: "744849133114",
+  appId: "1:744849133114:web:31c5f34bc1ace7e3a5ef03"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+console.log('🔍 DEBUG: Firebase initialized');
+console.log('🔍 DEBUG: Firebase config projectId:', firebaseConfig.projectId);
+console.log('🔍 DEBUG: Firestore db instance:', db);
+
+// Save game score function
+async function saveGameScore(userId, gameType, score, displayName = null, groupName = null) {
+    console.log(`🔄 saveGameScore called with:`, { userId, gameType, score, displayName, groupName });
+    try {
+        console.log(`🔄 Updating leaderboard for ${gameType} with score: ${score}`);
+
+        const leaderboardRef = collection(db, 'leaderboard_drag_drop');
+        const q = query(leaderboardRef, where('userId', '==', userId));
+        const querySnapshot = await getDocs(q);
+
+        let existingData = null;
+        let docRef = null;
+
+        if (!querySnapshot.empty) {
+            // Update existing player
+            docRef = querySnapshot.docs[0].ref;
+            existingData = querySnapshot.docs[0].data();
+            console.log('📝 Updating existing player:', existingData.displayName);
+        } else {
+            // Create new player entry
+            console.log('🆕 Creating new player entry');
+        }
+
+        // For matching game, accumulate points across sessions
+        const currentPoints = existingData?.score || 0;
+        const accumulated = currentPoints + (score || 0);
+
+        const updateData = {
+            userId: userId,
+            displayName: displayName || existingData?.displayName || 'Anonymous',
+            groupName: groupName || existingData?.groupName || 'No Group',
+            score: accumulated,
+            updatedAt: new Date()
+        };
+
+        updateData.totalPoints = updateData.score;
+        updateData.matchingPoints = updateData.score;
+
+        console.log(`🔗 Matching score (accumulated): ${updateData.score}`);
+
+        // Initialize badges array if not existing
+        if (!existingData?.badges) {
+            updateData.badges = [];
+        }
+
+        // Check for new badges based on total points
+        const newBadges = checkForNewBadges(updateData.totalPoints, existingData?.badges || []);
+        if (newBadges.length > 0) {
+            updateData.badges = [...(existingData?.badges || []), ...newBadges];
+            console.log('🏆 New badges earned:', newBadges);
+        }
+
+        if (docRef) {
+            // Update existing document
+            await updateDoc(docRef, updateData);
+        } else {
+            // Create new document
+            updateData.createdAt = new Date();
+            await addDoc(leaderboardRef, updateData);
+        }
+
+        // Also keep a per-user aggregated points document for other parts of the app
+        try {
+            const userPointsRef = doc(db, 'user_points', userId);
+            const userPointsData = {
+                userId: userId,
+                displayName: updateData.displayName,
+                groupName: updateData.groupName,
+                totalPoints: updateData.totalPoints || 0,
+                ladderPoints: updateData.ladderPoints || 0,
+                quizPoints: updateData.quizPoints || 0,
+                matchingPoints: updateData.matchingPoints || 0,
+                updatedAt: new Date()
+            };
+
+            // Use setDoc to create or overwrite the user's points document
+            await setDoc(userPointsRef, userPointsData, { merge: true });
+            console.log('✅ user_points document updated for', userId);
+        } catch (err) {
+            console.error('❌ Failed to update user_points doc:', err);
+        }
+
+        console.log('✅ Leaderboard updated successfully');
+        console.log('🚀 saveGameScore COMPLETED');
+        return updateData;
+    } catch (error) {
+        console.error('❌ Error saving game score:', error);
+        console.error('🚀 saveGameScore FAILED with error:', error.message);
+        throw error;
+    }
+}
+
+// Helper function for badge checking
+function checkForNewBadges(totalPoints, existingBadges) {
+    const newBadges = [];
+
+    const badgeThresholds = [
+        { points: 100, badge: 'Bronze Scholar' },
+        { points: 250, badge: 'Silver Scholar' },
+        { points: 500, badge: 'Gold Scholar' },
+        { points: 1000, badge: 'Platinum Scholar' },
+        { points: 2000, badge: 'Diamond Scholar' },
+        { points: 5000, badge: 'Master Scholar' }
+    ];
+
+    badgeThresholds.forEach(({ points, badge }) => {
+        if (totalPoints >= points && !existingBadges.includes(badge)) {
+            newBadges.push(badge);
+        }
+    });
+
+    // Special badges for game types
+    if (totalPoints >= 100 && !existingBadges.includes('First Steps')) {
+        newBadges.push('First Steps');
+    }
+
+    if (totalPoints >= 500 && !existingBadges.includes('Knowledge Seeker')) {
+        newBadges.push('Knowledge Seeker');
+    }
+
+    return newBadges;
+}
+
+
+
+let currentUser = null;
+let currentLevelIndex = 0;
+let groupName = '';
+let sessionEarnedPoints = 0; // accumulate points across levels in this play session
+let chancesLeft = 2; // 2 chances per level
+let puzzleData = {
+  levels: [
+    {
+      title: "Level 1",
+      items: [
+        { text: "Piliin ang paksa", points: 10 },
+        { text: "Magdagdag ng predikado", points: 10 },
+        { text: "Ayusin ang salita", points: 10 },
+        { text: "Lagyan ng bantas", points: 10 }
+      ],
+      correctOrder: [
+        "Piliin ang paksa",
+        "Magdagdag ng predikado",
+        "Ayusin ang salita",
+        "Lagyan ng bantas"
+      ]
+    }
+  ]
+};
+
+// Check authentication
+onAuthStateChanged(auth, (user) => {
+  console.log('🔍 DEBUG: Auth state changed');
+  console.log('🔍 DEBUG: User:', user);
+  console.log('🔍 DEBUG: User ID:', user?.uid);
+  console.log('🔍 DEBUG: User email:', user?.email);
+  console.log('🔍 DEBUG: User displayName:', user?.displayName);
+
+  currentUser = user;
+  if (user) {
+    console.log('✅ DEBUG: User is authenticated, showing group input modal');
+    showGroupInputModal();
+  } else {
+    console.log('❌ DEBUG: User is not authenticated, showing default puzzle');
+    // Show default puzzle if not logged in
+    renderPuzzle();
+  }
+});
+
+// Show group name input modal
+function showGroupInputModal() {
+  const modal = document.createElement('div');
+  modal.id = 'group-modal';
+  modal.innerHTML = `
+    <div class="modal-overlay">
+      <div class="modal-content">
+        <h2>🎯 Pumili ng Group Name</h2>
+        <p>Ilagay ang pangalan ng iyong grupo upang ma-track ang progreso sa dashboard.</p>
+        <input type="text" id="group-name-input" placeholder="Halimbawa: Group A, Team Blue, etc." maxlength="50">
+        <div class="modal-buttons">
+          <button id="start-game-btn" class="start-btn">Simulan ang Laro</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Focus on input
+  document.getElementById('group-name-input').focus();
+
+  // Handle start game
+  document.getElementById('start-game-btn').addEventListener('click', () => {
+    const input = document.getElementById('group-name-input');
+    groupName = input.value.trim();
+    if (groupName) {
+      // Save group name to both storage methods for redundancy
+      localStorage.setItem('studentGroup', groupName);
+      sessionStorage.setItem('studentGroup', groupName);
+      console.log('✅ Group name saved:', groupName);
+      modal.remove();
+      loadPuzzle();
+    } else {
+      alert('Pakilagay ang pangalan ng grupo bago magsimula.');
+      input.focus();
+    }
+  });
+
+  // Allow enter key
+  document.getElementById('group-name-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      document.getElementById('start-game-btn').click();
+    }
+  });
+}
+
+// Load puzzle from Firebase
+async function loadPuzzle() {
+  try {
+    const questionsRef = collection(db, 'game_content');
+
+    // Get all documents and filter for matching game type
+    const allDocs = await getDocs(questionsRef);
+    const matchingDocs = [];
+    allDocs.forEach(doc => {
+      const data = doc.data();
+      if (data.gameType === 'matching') {
+        matchingDocs.push({ id: doc.id, data: data });
+      }
+    });
+
+    if (matchingDocs.length > 0) {
+      // Sort by updatedAt and get the most recent
+      const sortedDocs = matchingDocs.sort((a, b) => {
+        const aTime = a.data.updatedAt?.toDate?.() || new Date(a.data.updatedAt || 0);
+        const bTime = b.data.updatedAt?.toDate?.() || new Date(b.data.updatedAt || 0);
+        return bTime - aTime;
+      });
+
+      const latestDoc = sortedDocs[0];
+      let loadedData = latestDoc.data.content?.puzzleData;
+      
+      // Backward compatibility: convert old single-level format to new multi-level format
+      if (loadedData && !loadedData.levels) {
+        loadedData = {
+          levels: [{
+            title: "Level 1",
+            items: loadedData.items || [],
+            correctOrder: loadedData.correctOrder || []
+          }]
+        };
+      }
+      
+      // Normalize items to objects with points
+      if (loadedData && loadedData.levels) {
+        loadedData.levels.forEach(level => {
+          if (level.items && Array.isArray(level.items)) {
+            level.items = level.items.map(item => {
+              if (typeof item === 'string') {
+                return { text: item, points: 10 };
+              }
+              return item;
+            });
+          }
+        });
+      }
+      
+      puzzleData = loadedData || puzzleData;
+      console.log('Loaded latest matching game from:', latestDoc.id);
+    }
+
+    renderPuzzle();
+  } catch (error) {
+    console.error('Error loading puzzle:', error);
+    renderPuzzle();
+  }
+}
+
+// Render the puzzle game
+function renderPuzzle() {
+  const gameContainer = document.querySelector('.game-container');
+  if (!gameContainer) {
+    // Create the game container if it doesn't exist
+    const container = document.createElement('div');
+    container.className = 'game-container';
+    container.innerHTML = `
+      <div class="puzzle-instructions">
+        <h2>🧩 Drag & Drop Puzzle Challenge </h2>
+        <p>Ayusin ang mga hakbang sa tamang pagkaka-ugnay upang bumuo ng kumpletong pangungusap!</p>
+        <p><strong>Paalala:</strong> I-drag ang mga item sa tamang pagkaka-ugnay.</p>
+      </div>
+
+      <div class="puzzle-area">
+        <div class="items-container">
+          <h3>Mga Item:</h3>
+          <div id="items-list" class="items-list">
+            <!-- Items will be populated here -->
+          </div>
+        </div>
+
+        <div class="drop-zone-container">
+          <h3>Tamang Pagkaka-ugnay:</h3>
+          <div id="drop-zones" class="drop-zones">
+            <!-- Drop zones will be populated here -->
+          </div>
+        </div>
+      </div>
+
+      <div class="game-controls">
+        <button id="check-btn" class="check-btn">Tingnan ang Sagot</button>
+        <button id="reset-btn" class="reset-btn">Ulitin</button>
+        <div id="score-display" class="score-display">Puntos: 0/100</div>
+        <div id="chances-display" class="chances-display">Chances: 2</div>
+      </div>
+    `;
+    document.body.appendChild(container);
+
+    // Add event listeners
+    document.getElementById('check-btn').addEventListener('click', checkAnswer);
+    document.getElementById('reset-btn').addEventListener('click', resetGame);
+  }
+
+  // Populate items
+  const itemsList = document.getElementById('items-list');
+  itemsList.innerHTML = '';
+
+  const currentLevel = puzzleData.levels[currentLevelIndex];
+  if (!currentLevel) {
+    itemsList.innerHTML = '<p>No level data found!</p>';
+    return;
+  }
+
+  // Shuffle the items for the game
+  const shuffledItems = [...currentLevel.items].sort(() => Math.random() - 0.5);
+
+  shuffledItems.forEach((item, index) => {
+    const itemElement = document.createElement('div');
+    itemElement.className = 'puzzle-item';
+    itemElement.draggable = true;
+    const itemText = item.text || item;
+    const itemPoints = item.points || 10;
+    itemElement.innerHTML = `<span class="item-text">${itemText}</span><span class="item-points">(${itemPoints} pts)</span>`;
+    itemElement.dataset.correctText = itemText; // Store the correct text for comparison
+    itemElement.dataset.originalIndex = currentLevel.items.indexOf(item);
+    itemElement.addEventListener('dragstart', handleDragStart);
+    itemElement.addEventListener('dragend', handleDragEnd);
+    itemsList.appendChild(itemElement);
+  });
+
+  // Populate drop zones
+  const dropZones = document.getElementById('drop-zones');
+  dropZones.innerHTML = '';
+
+  currentLevel.correctOrder.forEach((correctItem, index) => {
+    const dropZone = document.createElement('div');
+    dropZone.className = 'drop-zone';
+    dropZone.dataset.correctIndex = index;
+    dropZone.addEventListener('dragover', handleDragOver);
+    dropZone.addEventListener('drop', handleDrop);
+    dropZone.innerHTML = `<span class="step-number">${index + 1}.</span> <span class="drop-content">I-drop dito ang item</span>`;
+    dropZones.appendChild(dropZone);
+  });
+
+  // Hide loading message
+  const loadingMsg = document.querySelector('p');
+  if (loadingMsg && loadingMsg.textContent === 'Loading puzzle...') {
+    loadingMsg.style.display = 'none';
+  }
+
+  // Reset score display with correct total
+  let totalPoints = 0;
+  if (currentLevel && currentLevel.items) {
+    currentLevel.items.forEach(item => {
+      const points = item && typeof item === 'object' ? item.points : 10;
+      totalPoints += points;
+    });
+  }
+  document.getElementById('score-display').textContent = `Puntos: 0/${totalPoints}`;
+  document.getElementById('chances-display').textContent = `Chances: ${chancesLeft}`;
+}
+
+// Drag and drop handlers
+function handleDragStart(e) {
+  e.dataTransfer.setData('text/plain', e.target.dataset.originalIndex);
+  e.target.classList.add('dragging');
+}
+
+function handleDragEnd(e) {
+  e.target.classList.remove('dragging');
+  document.querySelectorAll('.drop-zone').forEach(zone => {
+    zone.classList.remove('drag-over');
+  });
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+
+  const draggedIndex = e.dataTransfer.getData('text/plain');
+  const draggedElement = document.querySelector(`[data-original-index="${draggedIndex}"]`);
+
+  if (draggedElement && !e.currentTarget.querySelector('.puzzle-item')) {
+    // Remove from current location
+    if (draggedElement.parentElement) {
+      draggedElement.parentElement.removeChild(draggedElement);
+    }
+
+    // Add to drop zone
+    e.currentTarget.innerHTML = `<span class="step-number">${parseInt(e.currentTarget.dataset.correctIndex) + 1}.</span>`;
+    e.currentTarget.appendChild(draggedElement);
+    draggedElement.classList.remove('dragging');
+    draggedElement.style.position = 'static';
+    draggedElement.style.transform = 'none';
+  }
+}
+
+// Check answer
+function checkAnswer() {
+  const dropZones = document.querySelectorAll('.drop-zone');
+  let correctCount = 0;
+  let totalPoints = 0;
+  let earnedPoints = 0;
+
+  const currentLevel = puzzleData.levels[currentLevelIndex];
+  if (!currentLevel) return;
+
+  dropZones.forEach((zone, index) => {
+    const item = zone.querySelector('.puzzle-item');
+    const itemText = item ? item.dataset.correctText : '';
+    const correctItem = currentLevel.correctOrder[index];
+
+    console.log(`Checking zone ${index}: itemText="${itemText}", correctItem="${correctItem}"`);
+
+    if (item && itemText === correctItem) {
+      zone.classList.add('correct');
+      zone.classList.remove('incorrect');
+      correctCount++;
+      // Find the points for this correct item
+      const itemObj = currentLevel.items.find(i => (i.text || i) === correctItem);
+      const points = itemObj && typeof itemObj === 'object' ? itemObj.points : 10;
+      earnedPoints += points;
+    } else {
+      zone.classList.add('incorrect');
+      zone.classList.remove('correct');
+    }
+  });
+
+  console.log(`Total correct: ${correctCount}/${currentLevel.correctOrder.length}`);
+
+  // Calculate total possible points
+  currentLevel.items.forEach(item => {
+    const points = item && typeof item === 'object' ? item.points : 10;
+    totalPoints += points;
+  });
+
+  document.getElementById('score-display').textContent = `Puntos: ${earnedPoints}/${totalPoints}`;
+
+  if (correctCount === currentLevel.correctOrder.length) {
+    console.log('🎉 All answers correct! Game/level completed.');
+    setTimeout(() => {
+      alert('🎉 Perfect! Tama ang lahat ng pagkaka-ugnay!');
+      // Auto-advance to next level if available
+      if (currentLevelIndex < puzzleData.levels.length - 1) {
+        console.log(`Advancing to level ${currentLevelIndex + 1}`);
+        setTimeout(() => {
+          // accumulate and save this level's points
+          sessionEarnedPoints += earnedPoints;
+          console.log(`🔢 Session accumulated points after level ${currentLevelIndex + 1}: ${sessionEarnedPoints}`);
+          saveProgress(currentLevelIndex + 1, earnedPoints, false);
+          currentLevelIndex++;
+          chancesLeft = 2; // Reset chances for new level
+          renderPuzzle();
+          alert(`🏆 Level ${currentLevelIndex} Complete! Moving to Level ${currentLevelIndex + 1}...`);
+        }, 1500);
+      } else {
+        console.log('Game fully completed! Showing completion modal.');
+        // Game completed
+        // accumulate and save final level points
+        sessionEarnedPoints += earnedPoints;
+        console.log(`🔢 Session final accumulated points: ${sessionEarnedPoints}`);
+        saveProgress(currentLevelIndex + 1, earnedPoints, true);
+        setTimeout(() => {
+          showCompletionModal(sessionEarnedPoints);
+        }, 1000);
+      }
+    }, 500);
+  } else {
+    // Not all correct
+    chancesLeft--;
+    document.getElementById('chances-display').textContent = `Chances: ${chancesLeft}`;
+    
+    if (chancesLeft > 0) {
+      setTimeout(() => {
+        alert(`❌ Hindi tama ang lahat. May ${chancesLeft} chance(s) pa. Subukang muli!`);
+        // Allow retry - reset the level
+        resetGame();
+      }, 500);
+    } else {
+      // No chances left, auto-advance with 0 points
+      setTimeout(() => {
+        alert('❌ Wala nang chances! Automatic na lilipat sa next level.');
+        // Auto-advance to next level with 0 points
+        if (currentLevelIndex < puzzleData.levels.length - 1) {
+          console.log(`Auto-advancing to level ${currentLevelIndex + 1} with 0 points`);
+          setTimeout(() => {
+            // accumulate 0 points for this failed level
+            sessionEarnedPoints += 0;
+            console.log(`🔢 Session accumulated points after failed level ${currentLevelIndex + 1}: ${sessionEarnedPoints}`);
+            saveProgress(currentLevelIndex + 1, 0, false);
+            currentLevelIndex++;
+            chancesLeft = 2; // Reset chances for new level
+            renderPuzzle();
+            alert(`⏭️ Auto-advanced to Level ${currentLevelIndex + 1}...`);
+          }, 1500);
+        } else {
+          // Game completed even with failure on last level
+          sessionEarnedPoints += 0;
+          console.log(`🔢 Session final accumulated points: ${sessionEarnedPoints}`);
+          saveProgress(currentLevelIndex + 1, 0, true);
+          setTimeout(() => {
+            showCompletionModal(sessionEarnedPoints);
+          }, 1000);
+        }
+      }, 500);
+    }
+  }
+}
+
+// Reset game
+function resetGame() {
+  document.querySelectorAll('.drop-zone').forEach(zone => {
+    zone.classList.remove('correct', 'incorrect');
+    const item = zone.querySelector('.puzzle-item');
+    if (item) {
+      zone.removeChild(item);
+      document.getElementById('items-list').appendChild(item);
+    }
+    zone.innerHTML = `<span class="step-number">${parseInt(zone.dataset.correctIndex) + 1}.</span> <span class="drop-content">I-drop dito ang item</span>`;
+  });
+
+  // Calculate total possible points
+  const currentLevel = puzzleData.levels[currentLevelIndex];
+  let totalPoints = 0;
+  if (currentLevel && currentLevel.items) {
+    currentLevel.items.forEach(item => {
+      const points = item && typeof item === 'object' ? item.points : 10;
+      totalPoints += points;
+    });
+  }
+
+  document.getElementById('score-display').textContent = `Puntos: 0/${totalPoints}`;
+  document.getElementById('chances-display').textContent = `Chances: ${chancesLeft}`;
+}
+
+// Make functions globally available
+window.checkAnswer = checkAnswer;
+window.resetGame = resetGame;
+
+// Save game progress to Firebase
+async function saveProgress(levelCompleted, score, completed = false) {
+  console.log('🔍 DEBUG: Attempting to save progress...');
+  console.log('🔍 DEBUG: currentUser:', currentUser);
+  console.log('🔍 DEBUG: currentUser.uid:', currentUser?.uid);
+  console.log('🔍 DEBUG: groupName:', groupName);
+  console.log('🔍 DEBUG: levelCompleted:', levelCompleted, 'score:', score, 'completed:', completed);
+
+  if (!currentUser) {
+    console.error('❌ DEBUG: No user logged in, cannot save progress');
+    alert('You must be signed in to save progress. Please refresh the page and sign in.');
+    return;
+  }
+
+  if (!groupName) {
+    console.error('❌ DEBUG: No group name set, cannot save progress');
+    alert('Please enter a group name before playing.');
+    return;
+  }
+
+  try {
+    const docId = `${currentUser.uid}_matching_${Date.now()}`;
+    console.log('🔍 DEBUG: Saving to document ID:', docId);
+
+    const progressRef = doc(db, 'game_progress', docId);
+    const progressData = {
+      userId: currentUser.uid,
+      gameType: 'matching',
+      groupName: groupName,
+      levelCompleted: levelCompleted,
+      score: score,
+      completed: completed,
+      timestamp: new Date(),
+      totalLevels: puzzleData.levels.length
+    };
+
+    console.log('🔍 DEBUG: Progress data to save:', progressData);
+    console.log('🔍 DEBUG: About to call setDoc...');
+
+    await setDoc(progressRef, progressData);
+    console.log('✅ Progress saved successfully to Firestore');
+
+    // Award points for the game
+    await awardPoints(score, 'matching');
+
+    // Check for badges
+    await checkAndAwardBadges();
+
+    // Update leaderboard
+    await updateLeaderboard();
+
+    // Verify the save by trying to read it back
+    const docSnap = await getDoc(progressRef);
+    if (docSnap.exists()) {
+      console.log('✅ Verification: Document exists in Firestore');
+    } else {
+      console.error('❌ Verification failed: Document does not exist');
+    }
+
+  } catch (error) {
+    console.error('❌ Error saving progress:', error);
+    console.error('❌ Error code:', error.code);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Full error details:', error);
+
+    // Show user-friendly error message
+    if (error.code === 'permission-denied') {
+      alert('Permission denied. Please make sure:\n1. You are signed in\n2. Firestore rules are published in Firebase Console\n3. Your domain is authorized');
+    } else {
+      alert('Error saving progress: ' + error.message);
+    }
+  }
+}
+
+// Award points for game completion
+async function awardPoints(score, gameType) {
+  try {
+    // Award points based on earned score (already calculated as sum of correct item points)
+    const gamePoints = score;
+
+    // Update leaderboard with points (allow anonymous)
+    const userId = currentUser ? currentUser.uid : getAnonymousUserId();
+    const displayName = currentUser?.displayName || sessionStorage.getItem('studentName') || localStorage.getItem('studentName') || 'Anonymous';
+    // Use groupName from variable (set by modal) or fall back to localStorage
+    const groupNameToSave = groupName || sessionStorage.getItem('studentGroup') || localStorage.getItem('studentGroup') || 'No Group';
+
+    console.log('🔍 DEBUG awardPoints: groupName variable:', groupName);
+    console.log('🔍 DEBUG awardPoints: localStorage studentGroup:', localStorage.getItem('studentGroup'));
+    console.log('🔍 DEBUG awardPoints: final groupNameToSave:', groupNameToSave);
+
+    await saveGameScore(userId, 'matching', gamePoints, displayName, groupNameToSave);
+
+    console.log(`✅ Awarded ${gamePoints} points for matching game with group: ${groupNameToSave}`);
+  } catch (error) {
+    console.error('❌ Error awarding points:', error);
+  }
+}
+
+// Utility function to get anonymous user ID
+function getAnonymousUserId() {
+  let userId = localStorage.getItem('anonymousUserId');
+  if (!userId) {
+    userId = 'anon_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('anonymousUserId', userId);
+  }
+  return userId;
+}
+
+// Check and award badges
+async function checkAndAwardBadges() {
+  if (!currentUser) return;
+
+  try {
+    const pointsRef = doc(db, 'user_points', currentUser.uid);
+    const badgesRef = doc(db, 'user_badges', currentUser.uid);
+
+    const [pointsDoc, badgesDoc] = await Promise.all([
+      getDoc(pointsRef),
+      getDoc(badgesRef)
+    ]);
+
+    if (!pointsDoc.exists()) return;
+
+    const points = pointsDoc.data();
+    const currentBadges = badgesDoc.exists() ? badgesDoc.data().badges || [] : [];
+
+    const newBadges = [];
+
+    // Badge criteria
+    const badgeCriteria = {
+      'First Steps': points.totalPoints >= 1,
+      'Puzzle Master': points.matchingPoints >= 50,
+      'Speed Demon': points.quizPoints >= 50,
+      'Climber': points.ladderPoints >= 50,
+      'Century Club': points.totalPoints >= 100,
+      'Champion': points.totalPoints >= 200,
+      'Legend': points.totalPoints >= 500
+    };
+
+    // Check for new badges
+    for (const [badgeName, criteria] of Object.entries(badgeCriteria)) {
+      if (criteria && !currentBadges.includes(badgeName)) {
+        newBadges.push(badgeName);
+        currentBadges.push(badgeName);
+      }
+    }
+
+    if (newBadges.length > 0) {
+      await setDoc(badgesRef, {
+        badges: currentBadges,
+        lastUpdated: new Date()
+      });
+
+      // Show badge notification
+      showBadgeNotification(newBadges);
+      console.log('✅ New badges awarded:', newBadges);
+    }
+
+  } catch (error) {
+    console.error('Error checking badges:', error);
+  }
+}
+
+// Update leaderboard
+async function updateLeaderboard() {
+  if (!currentUser) return;
+
+  try {
+    const pointsRef = doc(db, 'user_points', currentUser.uid);
+    const badgesRef = doc(db, 'user_badges', currentUser.uid);
+    const leaderboardRef = doc(db, 'leaderboard', currentUser.uid);
+
+    const [pointsDoc, badgesDoc] = await Promise.all([
+      getDoc(pointsRef),
+      getDoc(badgesRef)
+    ]);
+
+    if (!pointsDoc.exists()) return;
+
+    const points = pointsDoc.data();
+    const badges = badgesDoc.exists() ? badgesDoc.data().badges || [] : [];
+
+    const leaderboardData = {
+      userId: currentUser.uid,
+      displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Anonymous',
+      groupName: groupName,
+      totalPoints: points.totalPoints || 0,
+      matchingPoints: points.matchingPoints || 0,
+      quizPoints: points.quizPoints || 0,
+      ladderPoints: points.ladderPoints || 0,
+      badges: badges,
+      lastUpdated: new Date()
+    };
+
+    await setDoc(leaderboardRef, leaderboardData);
+    console.log('✅ Leaderboard updated');
+
+  } catch (error) {
+    console.error('Error updating leaderboard:', error);
+  }
+}
+
+// Show badge notification
+function showBadgeNotification(newBadges) {
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    z-index: 1000;
+    max-width: 300px;
+    animation: slideIn 0.5s ease;
+  `;
+
+  notification.innerHTML = `
+    <h4 style="margin: 0 0 10px 0; font-size: 18px;">🏅 New Badges!</h4>
+    <p style="margin: 0; font-size: 14px;">Congratulations! You earned:</p>
+    <div style="margin-top: 10px;">
+      ${newBadges.map(badge => `<span style="display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 10px; margin: 2px; font-size: 12px;">${badge}</span>`).join('')}
+    </div>
+  `;
+
+  document.body.appendChild(notification);
+
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    notification.style.animation = 'slideOut 0.5s ease';
+    setTimeout(() => notification.remove(), 500);
+  }, 5000);
+}
+
+// Show completion modal
+function showCompletionModal(finalScore) {
+  // Calculate total possible points
+  let totalPossiblePoints = 0;
+  puzzleData.levels.forEach(level => {
+    if (level.items) {
+      level.items.forEach(item => {
+        const points = item && typeof item === 'object' ? item.points : 10;
+        totalPossiblePoints += points;
+      });
+    }
+  });
+
+  const modal = document.createElement('div');
+  modal.id = 'completion-modal';
+  modal.innerHTML = `
+    <div class="modal-overlay">
+      <div class="modal-content completion-modal">
+        <div class="completion-header">
+          <h2>🎉 Congratulations!</h2>
+          <p>You've completed all levels of the Drag & Drop Puzzle!</p>
+        </div>
+
+        <div class="completion-stats">
+          <div class="stat-item">
+            <span class="stat-label">Group:</span>
+            <span class="stat-value">${groupName}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Final Score:</span>
+            <span class="stat-value">${finalScore}/${totalPossiblePoints}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Points Earned:</span>
+            <span class="stat-value" style="color: #FFD700; font-weight: bold;">+${finalScore} pts</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Levels Completed:</span>
+            <span class="stat-value">${puzzleData.levels.length}</span>
+          </div>
+        </div>
+
+        <div class="completion-message">
+          <p>Great job! Your progress, points, and any new badges have been saved!</p>
+          <p style="margin-top: 10px; font-size: 14px; color: #666;">Check the leaderboard to see how you rank against other players.</p>
+        </div>
+
+        <div class="modal-buttons">
+          <button id="play-again-btn" class="play-again-btn">Maglaro Uli</button>
+          <button id="view-leaderboard-btn" class="view-leaderboard-btn">View Leaderboard</button>
+          <button id="back-to-games-btn" class="back-btn">Bumalik sa Games</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Handle play again
+  document.getElementById('play-again-btn').addEventListener('click', () => {
+    modal.remove();
+    currentLevelIndex = 0;
+    sessionEarnedPoints = 0;
+    chancesLeft = 2; // Reset chances for new game
+    renderPuzzle();
+  });
+
+  // Handle view leaderboard
+  document.getElementById('view-leaderboard-btn').addEventListener('click', () => {
+    window.location.href = 'leaderboard.html?type=matching';
+  });
+
+  // Handle back to games
+  document.getElementById('back-to-games-btn').addEventListener('click', () => {
+    window.location.href = 'select.html';
+  });
+}
+    </script>
+    <style>
+.game-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.puzzle-instructions {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.puzzle-area {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.items-container, .drop-zone-container {
+  flex: 1;
+}
+
+.items-container h3, .drop-zone-container h3 {
+  color: #333;
+  margin-bottom: 15px;
+  font-size: 18px;
+}
+
+.items-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 100px;
+  padding: 15px;
+  border: 2px dashed #ddd;
+  border-radius: 10px;
+  background: #f9f9f9;
+}
+
+.puzzle-item {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: move;
+  user-select: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.item-text {
+  flex: 1;
+}
+
+.item-points {
+  font-size: 12px;
+  font-weight: bold;
+  background: rgba(255,255,255,0.2);
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 8px;
+}
+
+.puzzle-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.puzzle-item.dragging {
+  opacity: 0.5;
+  transform: rotate(5deg);
+}
+
+.drop-zones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.drop-zone {
+  min-height: 50px;
+  padding: 15px;
+  border: 2px dashed #ddd;
+  border-radius: 10px;
+  background: #f9f9f9;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.drop-zone.drag-over {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.drop-zone.correct {
+  border-color: #4CAF50;
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.drop-zone.incorrect {
+  border-color: #f44336;
+  background: rgba(244, 67, 54, 0.1);
+}
+
+.step-number {
+  font-weight: bold;
+  color: #333;
+  margin-right: 10px;
+  min-width: 20px;
+}
+
+.drop-content {
+  color: #666;
+  font-style: italic;
+}
+
+.game-controls {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  align-items: center;
+  margin-top: 30px;
+}
+
+.check-btn, .reset-btn {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.check-btn {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+}
+
+.check-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+}
+
+.reset-btn {
+  background: linear-gradient(135deg, #FF9800, #F57C00);
+  color: white;
+}
+
+.reset-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
+}
+
+.score-display {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  background: #f0f0f0;
+  padding: 10px 20px;
+  border-radius: 20px;
+}
+
+.chances-display {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  background: #ffeaa7;
+  padding: 10px 20px;
+  border-radius: 20px;
+}
+
+@media (max-width: 768px) {
+  .puzzle-area {
+    flex-direction: column;
+  }
+
+  .game-controls {
+    flex-direction: column;
+    gap: 15px;
+  }
+}
+
+/* Badge Notification Animations */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Group Input Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+}
+
+.modal-content h2 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.modal-content p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+#group-name-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+#group-name-input:focus {
+  border-color: #667eea;
+  outline: none;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+}
+
+.start-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Completion Modal */
+.completion-modal {
+  max-width: 500px;
+}
+
+.completion-header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.completion-header h2 {
+  color: #333;
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.completion-header p {
+  color: #666;
+  font-size: 16px;
+}
+
+.completion-stats {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 25px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.stat-item:last-child {
+  border-bottom: none;
+}
+
+.stat-label {
+  font-weight: 600;
+  color: #555;
+}
+
+.stat-value {
+  font-weight: bold;
+  color: #333;
+  font-size: 18px;
+}
+
+.completion-message {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #666;
+  font-style: italic;
+}
+
+.play-again-btn, .back-btn {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 0 10px;
+}
+
+.play-again-btn {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+}
+
+.play-again-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+}
+
+.view-leaderboard-btn {
+  background: linear-gradient(135deg, #FF9800, #F57C00);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 0 5px;
+}
+
+.view-leaderboard-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+}
+
+.back-btn {
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+  color: white;
+}
+
+.back-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+}
+    </style>
+</head>
+<body>
+    <a href="select.html" style="position: fixed; top: 20px; left: 20px; background: #FF6B6B; color: white; padding: 10px 20px; border-radius: 25px; text-decoration: none;">← Bumalik</a>
+
+    <h1 style="text-align: center; margin-top: 50px;">🧩 Drag & Drop Puzzle</h1>
+    <p style="text-align: center;">Loading puzzle...</p>
+</body>
+</html>

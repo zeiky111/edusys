@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wikahusayan - Login Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="landing-container">
+        <!-- Main Landing Page -->
+        <div id="landing-page">
+            <h1 class="landing-title">Wikahusayan</h1>
+            <p class="landing-subtitle">Ang Iyong Digital na Kaakbay sa Pag-aaral ng Wikang Filipino</p>
+
+            <div class="role-selection">
+                <div class="role-card">
+                    <span class="role-icon">🎓</span>
+                    <h3 class="role-title">Estudyante</h3>
+                    <p class="role-description">Sumabak sa mga aralin at laro upang pagyamanin ang iyong kaalaman sa wikang Filipino.</p>
+                    <div class="action-buttons">
+                        <button class="btn-small btn-primary" onclick="showRegisterForm('student')">Mag-register</button>
+                        <button class="btn-small btn-secondary" onclick="showLoginForm('student')">Mag-login</button>
+                    </div>
+                </div>
+
+                <div class="role-card">
+                    <span class="role-icon">👩‍🏫</span>
+                    <h3 class="role-title">Guro</h3>
+                    <p class="role-description">Pamahalaan ang mga aralin, subaybayan ang progreso ng mga estudyante.</p>
+                    <div class="action-buttons">
+                        <button class="btn-small btn-primary" onclick="showRegisterForm('teacher')">Mag-register</button>
+                        <button class="btn-small btn-secondary" onclick="showLoginForm('teacher')">Mag-login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Login Form -->
+        <div id="student-login" class="login-form">
+            <h2 class="form-title">🎓 Login bilang Estudyante</h2>
+            <form onsubmit="loginStudent(event)">
+                <div class="input-group">
+                    <label for="student-name" class="input-label">Buong Pangalan</label>
+                    <input type="text" id="student-name" class="input-field" placeholder="Ilagay ang iyong buong pangalan" required>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Mag-Login</button>
+                    <button type="button" class="btn btn-secondary" onclick="backToLanding()">Bumalik</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Teacher Login Form -->
+        <div id="teacher-login" class="login-form">
+            <h2 class="form-title">👩‍🏫 Login bilang Guro</h2>
+            <form onsubmit="loginTeacher(event)">
+                <div class="input-group">
+                    <label for="teacher-email" class="input-label">Gmail Address</label>
+                    <input type="email" id="teacher-email" class="input-field" placeholder="Ilagay ang iyong Gmail" required>
+                </div>
+                <div class="input-group">
+                    <label for="teacher-password" class="input-label">Password</label>
+                    <input type="password" id="teacher-password" class="input-field" placeholder="Ilagay ang password" required>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Mag-Login</button>
+                    <button type="button" class="btn btn-secondary" onclick="backToLanding()">Bumalik</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Student Register Form -->
+        <div id="student-register" class="login-form">
+            <h2 class="form-title">🎓 Mag-register bilang Estudyante</h2>
+            <form onsubmit="registerStudent(event)">
+                <div class="input-group">
+                    <label for="student-reg-name" class="input-label">Buong Pangalan</label>
+                    <input type="text" id="student-reg-name" class="input-field" placeholder="Ilagay ang iyong buong pangalan" required>
+                </div>
+                <div class="input-group">
+                    <label for="student-reg-grade" class="input-label">Grade Level</label>
+                    <select id="student-reg-grade" class="input-field" required>
+                        <option value="Grade 12">Grade 12</option>
+                    </select>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Mag-register</button>
+                    <button type="button" class="btn btn-secondary" onclick="backToLanding()">Bumalik</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Teacher Register Form -->
+        <div id="teacher-register" class="login-form">
+            <h2 class="form-title">👩‍🏫 Mag-register bilang Guro</h2>
+            <form onsubmit="registerTeacher(event)">
+                <div class="input-group">
+                    <label for="teacher-reg-name" class="input-label">Buong Pangalan</label>
+                    <input type="text" id="teacher-reg-name" class="input-field" placeholder="Ilagay ang iyong buong pangalan" required>
+                </div>
+                <div class="input-group">
+                    <label for="teacher-reg-email" class="input-label">Email Address</label>
+                    <input type="email" id="teacher-reg-email" class="input-field" placeholder="Ilagay ang iyong email" required>
+                </div>
+                <div class="input-group">
+                    <label for="teacher-reg-password" class="input-label">Password</label>
+                    <input type="password" id="teacher-reg-password" class="input-field" placeholder="Gumawa ng password" required minlength="6">
+                </div>
+                <div class="input-group">
+                    <label for="teacher-reg-confirm" class="input-label">Confirm Password</label>
+                    <input type="password" id="teacher-reg-confirm" class="input-field" placeholder="Ulitin ang password" required>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Mag-register</button>
+                    <button type="button" class="btn btn-secondary" onclick="backToLanding()">Bumalik</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        // NOTE: This is a demo config for testing. Replace with your actual Firebase config!
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9khDPPquuztCUWLfzithwPmQFpI8t49g",
+            authDomain: "wikahusayan-quest.firebaseapp.com",
+            projectId: "wikahusayan-quest",
+            storageBucket: "wikahusayan-quest.firebasestorage.app",
+            messagingSenderId: "744849133114",
+            appId: "1:744849133114:web:31c5f34bc1ace7e3a5ef03"
+        };
+
+        // Initialize Firebase
+        let auth, db;
+        try {
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization failed:', error);
+            // Show error message to user
+            document.body.innerHTML = `
+                <div style="text-align: center; padding: 50px; color: white;">
+                    <h1>🔧 Firebase Configuration Error</h1>
+                    <p>The Firebase project configuration is not working.</p>
+                    <p>Please check your Firebase Console and update the config.</p>
+                    <p>Error: ${error.message}</p>
+                    <br>
+                    <a href="index-test.html" style="color: yellow; text-decoration: underline;">
+                        Click here to use the test version (no Firebase required)
+                    </a>
+                </div>
+            `;
+        }
+
+        function showOptions(role) {
+            // This function is called when clicking the role card
+            // Individual buttons handle the specific actions
+        }
+
+        function showLoginForm(role) {
+            document.getElementById('landing-page').style.display = 'none';
+            document.getElementById(`${role}-login`).classList.add('active');
+        }
+
+        function showRegisterForm(role) {
+            document.getElementById('landing-page').style.display = 'none';
+            document.getElementById(`${role}-register`).classList.add('active');
+        }
+
+        function backToLanding() {
+            document.querySelectorAll('.login-form').forEach(form => {
+                form.classList.remove('active');
+            });
+            document.getElementById('landing-page').style.display = 'block';
+        }
+
+        async function registerStudent(event) {
+            event.preventDefault();
+
+            if (!auth || !db) {
+                alert('Firebase is not properly configured. Please check the configuration and try again.');
+                return;
+            }
+
+            const name = document.getElementById('student-reg-name').value.trim();
+            const grade = document.getElementById('student-reg-grade').value;
+
+            // Validation
+            if (!name || !grade) {
+                alert('Pakiusapan, punan ang lahat ng field.');
+                return;
+            }
+
+            try {
+                // For students, create a simple email from name and use default password
+                const studentEmail = `${name.toLowerCase().replace(/\s+/g, '.')}@student.wikahusayan.com`;
+                const defaultPassword = 'student123';
+
+                // Create Firebase Auth account
+                const userCredential = await createUserWithEmailAndPassword(auth, studentEmail, defaultPassword);
+                const user = userCredential.user;
+
+                // Save additional user data to Firestore
+                await setDoc(doc(db, 'users', user.uid), {
+                    name: name,
+                    email: studentEmail,
+                    role: 'student',
+                    grade: grade,
+                    createdAt: new Date().toISOString(),
+                    uid: user.uid
+                });
+
+                alert('Matagumpay na nag-register! Maaari ka nang mag-login.');
+
+                // Clear form and show login
+                event.target.reset();
+                backToLanding();
+                showLoginForm('student');
+
+            } catch (error) {
+                console.error('Registration error:', error);
+                if (error.code === 'auth/email-already-in-use') {
+                    alert('May account na sa pangalang ito. Pakisubukang mag-login.');
+                } else {
+                    alert('Nagkaroon ng error sa pag-register. Pakisubukang muli. Error: ' + error.message);
+                }
+            }
+        }
+
+        async function registerTeacher(event) {
+            event.preventDefault();
+
+            if (!auth || !db) {
+                alert('Firebase is not properly configured. Please check the configuration and try again.');
+                return;
+            }
+
+            const name = document.getElementById('teacher-reg-name').value.trim();
+            const email = document.getElementById('teacher-reg-email').value.trim();
+            const password = document.getElementById('teacher-reg-password').value;
+            const confirmPassword = document.getElementById('teacher-reg-confirm').value;
+
+            // Validation
+            if (!name || !email || !password) {
+                alert('Pakiusapan, punan ang lahat ng field.');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert('Hindi magkatugma ang password. Pakisubukang muli.');
+                return;
+            }
+
+            if (password.length < 6) {
+                alert('Ang password ay dapat hindi bababa sa 6 na character.');
+                return;
+            }
+
+            try {
+                console.log('Attempting to register teacher with:', { name, email, password: '***' });
+                // Create Firebase Auth account
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                console.log('Firebase Auth account created:', user.uid);
+
+                // Save additional user data to Firestore
+                await setDoc(doc(db, 'users', user.uid), {
+                    name: name,
+                    email: email,
+                    role: 'teacher',
+                    createdAt: new Date().toISOString(),
+                    uid: user.uid
+                });
+                console.log('User data saved to Firestore');
+
+                alert('Matagumpay na nag-register! Maaari ka nang mag-login.');
+
+                // Clear form and show login
+                event.target.reset();
+                backToLanding();
+                showLoginForm('teacher');
+
+            } catch (error) {
+                console.error('Registration error:', error);
+                if (error.code === 'auth/email-already-in-use') {
+                    alert('May account na sa email na ito. Pakisubukang mag-login.');
+                } else if (error.code === 'auth/weak-password') {
+                    alert('Ang password ay masyadong mahina. Gumamit ng mas malakas na password.');
+                } else {
+                    alert('Nagkaroon ng error sa pag-register. Pakisubukang muli. Error: ' + error.message);
+                }
+            }
+        }
+
+        async function loginStudent(event) {
+            event.preventDefault();
+
+            if (!auth || !db) {
+                alert('Firebase is not properly configured. Please check the configuration and try again.');
+                return;
+            }
+
+            const name = document.getElementById('student-name').value.trim();
+
+            if (!name) {
+                alert('Pakiusapan, ilagay ang iyong pangalan.');
+                return;
+            }
+
+            try {
+                // Generate the student email from name
+                const studentEmail = `${name.toLowerCase().replace(/\s+/g, '.')}@student.wikahusayan.com`;
+                const defaultPassword = 'student123';
+
+                // Sign in with Firebase Auth
+                const userCredential = await signInWithEmailAndPassword(auth, studentEmail, defaultPassword);
+                const user = userCredential.user;
+
+                // Get user data from Firestore
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+
+                    if (userData.role !== 'student') {
+                        alert('Hindi student account ang pangalang ito.');
+                        return;
+                    }
+
+                    // Store user info in session
+                    sessionStorage.setItem('studentName', userData.name);
+                    sessionStorage.setItem('studentEmail', userData.email);
+                    sessionStorage.setItem('studentGrade', userData.grade);
+                    sessionStorage.setItem('userRole', 'student');
+                    sessionStorage.setItem('userId', user.uid);
+
+                    // Redirect to student dashboard
+                    window.location.href = '../student/index.html';
+                } else {
+                    alert('Hindi nahanap ang user data. Pakikontak ang administrator.');
+                }
+
+            } catch (error) {
+                console.error('Login error:', error);
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    alert('Hindi tama ang pangalan o hindi pa nag-register. Pakisubukang mag-register muna.');
+                } else {
+                    alert('Nagkaroon ng error sa pag-login. Pakisubukang muli. Error: ' + error.message);
+                }
+            }
+        }
+
+        async function loginTeacher(event) {
+            event.preventDefault();
+
+            if (!auth || !db) {
+                alert('Firebase is not properly configured. Please check the configuration and try again.');
+                return;
+            }
+
+            const email = document.getElementById('teacher-email').value.trim();
+            const password = document.getElementById('teacher-password').value;
+
+            if (!email || !password) {
+                alert('Pakiusapan, punan ang lahat ng field.');
+                return;
+            }
+
+            try {
+                console.log('Attempting to login teacher with email:', email);
+                // Sign in with Firebase Auth
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                console.log('Firebase Auth login successful:', user.uid);
+
+                // Get user data from Firestore
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                console.log('User document exists:', userDoc.exists());
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    console.log('User data:', userData);
+
+                    if (userData.role !== 'teacher') {
+                        alert('Hindi teacher account ang email na ito.');
+                        return;
+                    }
+
+                    // Store user info in session
+                    sessionStorage.setItem('teacherName', userData.name);
+                    sessionStorage.setItem('teacherEmail', userData.email);
+                    sessionStorage.setItem('userRole', 'teacher');
+                    sessionStorage.setItem('userId', user.uid);
+
+                    // Redirect to teacher dashboard
+                    window.location.href = '../teacher/index.html';
+                } else {
+                    alert('Hindi nahanap ang user data. Pakikontak ang administrator.');
+                }
+
+            } catch (error) {
+                console.error('Login error:', error);
+                console.error('Error code:', error.code);
+                console.error('Error message:', error.message);
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    alert('Mali ang email o password. Pakisubukang muli o mag-register muna.');
+                } else {
+                    alert('Nagkaroon ng error sa pag-login. Pakisubukang muli. Error: ' + error.message);
+                }
+            }
+        }
+
+        // Make functions global so they can be called from HTML
+        window.registerStudent = registerStudent;
+        window.registerTeacher = registerTeacher;
+        window.loginStudent = loginStudent;
+        window.loginTeacher = loginTeacher;
+        window.showOptions = showOptions;
+        window.showLoginForm = showLoginForm;
+        window.showRegisterForm = showRegisterForm;
+        window.backToLanding = backToLanding;
+
+        // Test Firebase connection
+        async function testFirebaseConnection() {
+            try {
+                console.log('Testing Firebase connection...');
+                // Try to read a test document (this will fail but test connection)
+                const testQuery = query(collection(db, 'users'), limit(1));
+                await getDocs(testQuery);
+                console.log('Firebase connection successful');
+            } catch (error) {
+                console.error('Firebase connection test:', error);
+            }
+        }
+
+        // Check if user is already logged in
+        window.onload = function() {
+            testFirebaseConnection();
+            // Check Firebase auth state
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // User is signed in, redirect based on their role
+                    const userRole = sessionStorage.getItem('userRole');
+                    if (userRole === 'student') {
+                        window.location.href = '../student/index.html';
+                    } else if (userRole === 'teacher') {
+                        window.location.href = '../teacher/index.html';
+                    }
+                }
+                // If not signed in, stay on login page
+            });
+        };
+    </script>
+</body>
+</html>

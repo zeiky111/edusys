@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - Wikahusayan Quest</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .leaderboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .leaderboard-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .leaderboard-header h1 {
+            color: #333;
+            font-size: 36px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .leaderboard-header p {
+            color: #666;
+            font-size: 18px;
+        }
+
+        .leaderboard-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 5px;
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #666;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .leaderboard-content {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leaderboard-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .leaderboard-table td {
+            padding: 18px 20px;
+            border-bottom: 1px solid #eee;
+            transition: all 0.3s ease;
+        }
+
+        .leaderboard-table tr:hover td {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .rank-cell {
+            font-weight: bold;
+            font-size: 20px;
+            color: #333;
+            width: 60px;
+            text-align: center;
+        }
+
+        .rank-1 { color: #FFD700; }
+        .rank-2 { color: #C0C0C0; }
+        .rank-3 { color: #CD7F32; }
+
+        .player-cell {
+            display: flex;
+            align-items: center;
+        }
+
+        .player-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .player-info h4 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .player-group {
+            margin: 0;
+            font-size: 14px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .score-cell {
+            font-weight: bold;
+            font-size: 18px;
+            color: #4CAF50;
+            text-align: right;
+        }
+
+        .badges-cell {
+            text-align: center;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 2px;
+            background: #eee;
+            color: #666;
+        }
+
+        .badge.gold { background: linear-gradient(135deg, #FFD700, #FFA500); color: white; }
+        .badge.silver { background: linear-gradient(135deg, #C0C0C0, #A8A8A8); color: white; }
+        .badge.bronze { background: linear-gradient(135deg, #CD7F32, #A0522D); color: white; }
+        .badge.master { background: linear-gradient(135deg, #FF6B6B, #EE5A24); color: white; }
+        .badge.champion { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+
+        .loading, .error, .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .error {
+            color: #f44336;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .leaderboard-table th,
+            .leaderboard-table td {
+                padding: 12px 10px;
+            }
+
+            .player-avatar {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+
+            .player-info h4 {
+                font-size: 14px;
+            }
+
+            .player-group {
+                font-size: 12px;
+            }
+
+            .score-cell {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="select.html" class="back-btn">← Bumalik sa Games</a>
+
+    <div class="leaderboard-container">
+        <div class="leaderboard-header">
+            <h1>🏆 Leaderboard</h1>
+            <p>Overall Ranking combines Ladder Quiz + Speed Challenge scores. Individual tabs show game-specific rankings!</p>
+        </div>
+
+        <div class="leaderboard-tabs">
+            <button class="tab-btn active" onclick="switchTab('overall')">Overall Ranking</button>
+            <button class="tab-btn" onclick="switchTab('ladder')">Ladder Quiz</button>
+            <button class="tab-btn" onclick="switchTab('speed')">Speed Challenge</button>
+            <button class="tab-btn" onclick="switchTab('matching')">Drag & Drop</button>
+        </div>
+
+        <div class="leaderboard-content">
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">Rank</th>
+                        <th>Player</th>
+                        <th style="width: 120px; text-align: center;">Points</th>
+                        <th style="width: 150px; text-align: center;">Badges</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                    <tr>
+                        <td colspan="4" class="loading">Loading leaderboard...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+        import { getFirestore, collection, getDocs, query, orderBy } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9khDPPquuztCUWLfzithwPmQFpI8t49g",
+            authDomain: "wikahusayan-quest.firebaseapp.com",
+            projectId: "wikahusayan-quest",
+            storageBucket: "wikahusayan-quest.firebasestorage.app",
+            messagingSenderId: "744849133114",
+            appId: "1:744849133114:web:31c5f34bc1ace7e3a5ef03"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let currentTab = 'overall';
+
+        // Check authentication
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            loadLeaderboard(currentTab);
+        });
+
+        // Switch between tabs
+        window.switchTab = function(tabType) {
+            currentTab = tabType;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            loadLeaderboard(tabType);
+        };
+
+        // Load leaderboard data
+        async function loadLeaderboard(type) {
+            const tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = '<tr><td colspan="4" class="loading">Loading leaderboard...</td></tr>';
+
+            try {
+                let filteredDocs = [];
+
+                if (type === 'overall') {
+                    // Overall: Combine scores from ladder and speed challenge
+                    console.log('📊 Loading overall leaderboard - combining ladder and speed challenge scores');
+
+                    // Get ladder quiz scores
+                    const ladderRef = collection(db, 'leaderboard_ladder');
+                    const ladderSnapshot = await getDocs(ladderRef);
+
+                    // Get speed challenge scores
+                    const speedRef = collection(db, 'leaderboard_speed_challenge');
+                    const speedSnapshot = await getDocs(speedRef);
+
+                    // Combine scores by user
+                    const userScores = new Map();
+
+                    // Add ladder scores
+                    ladderSnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        const userId = data.userId;
+                        if (!userScores.has(userId)) {
+                            userScores.set(userId, {
+                                userId: userId,
+                                displayName: data.displayName || 'Anonymous',
+                                ladderPoints: 0,
+                                speedPoints: 0,
+                                totalPoints: 0,
+                                badges: data.badges || []
+                            });
+                        }
+                        const userData = userScores.get(userId);
+                        userData.ladderPoints = data.points || 0;
+                        userData.totalPoints += data.points || 0;
+                    });
+
+                    // Add speed challenge scores
+                    speedSnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        const userId = data.userId;
+                        if (!userScores.has(userId)) {
+                            userScores.set(userId, {
+                                userId: userId,
+                                displayName: data.displayName || 'Anonymous',
+                                ladderPoints: 0,
+                                speedPoints: 0,
+                                totalPoints: 0,
+                                badges: data.badges || []
+                            });
+                        }
+                        const userData = userScores.get(userId);
+                        userData.speedPoints = data.points || 0;
+                        userData.totalPoints += data.points || 0;
+                    });
+
+                    // Convert to array and filter out users with 0 total points
+                    userScores.forEach((userData) => {
+                        if (userData.totalPoints > 0) {
+                            filteredDocs.push({
+                                userId: userData.userId,
+                                data: userData,
+                                sortValue: userData.totalPoints
+                            });
+                        }
+                    });
+
+                    console.log(`📊 Overall leaderboard: ${filteredDocs.length} players with combined scores`);
+
+                } else {
+                    // Individual game leaderboards
+                    let collectionName;
+                    if (type === 'ladder') {
+                        collectionName = 'leaderboard_ladder';
+                    } else if (type === 'speed') {
+                        collectionName = 'leaderboard_speed_challenge';
+                    } else if (type === 'matching') {
+                        collectionName = 'leaderboard_drag_drop';
+                    }
+
+                    const gameRef = collection(db, collectionName);
+                    const querySnapshot = await getDocs(gameRef);
+
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        const points = data.points || 0;
+                        if (points > 0) {
+                            filteredDocs.push({
+                                doc,
+                                data,
+                                sortValue: points
+                            });
+                        }
+                    });
+
+                    console.log(`📊 ${type} leaderboard: ${filteredDocs.length} players`);
+                }
+
+                tbody.innerHTML = '';
+
+                // Sort by score descending
+                filteredDocs.sort((a, b) => b.sortValue - a.sortValue);
+
+                let rank = 1;
+                filteredDocs.forEach(({ doc, data, userId }) => {
+                    const isCurrentUser = currentUser && (
+                        (doc && doc.id === currentUser.uid) ||
+                        (userId && userId === currentUser.uid)
+                    );
+
+                    const row = document.createElement('tr');
+                    if (isCurrentUser) {
+                        row.style.background = 'rgba(102, 126, 234, 0.1)';
+                        row.style.borderLeft = '4px solid #667eea';
+                    }
+
+                    const score = data.sortValue || data.totalPoints || data.points || 0;
+                    const badges = data.badges || [];
+
+                    // For overall leaderboard, show breakdown
+                    let scoreDisplay = `${score} pts`;
+                    if (type === 'overall' && data.ladderPoints !== undefined && data.speedPoints !== undefined) {
+                        scoreDisplay = `${score} pts (L:${data.ladderPoints} + S:${data.speedPoints})`;
+                    }
+
+                    row.innerHTML = `
+                        <td class="rank-cell rank-${rank <= 3 ? rank : ''}">#${rank}</td>
+                        <td class="player-cell">
+                            <div class="player-avatar">
+                                ${(data.displayName || 'A').charAt(0).toUpperCase()}
+                            </div>
+                            <div class="player-info">
+                                <h4>${data.displayName || 'Anonymous'} ${isCurrentUser ? '(You)' : ''}</h4>
+                                <p class="player-group">${data.groupName || 'Individual Player'}</p>
+                            </div>
+                        </td>
+                        <td class="score-cell">${scoreDisplay}</td>
+                        <td class="badges-cell">
+                            ${badges.map(badge => `<span class="badge ${badge.toLowerCase()}">${badge}</span>`).join('')}
+                        </td>
+                    `;
+
+                    tbody.appendChild(row);
+                    rank++;
+                });
+
+                if (filteredDocs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="no-data">No scores available yet. Play some games to see rankings!</td></tr>';
+                }
+
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+                tbody.innerHTML = '<tr><td colspan="4" class="error">Error loading leaderboard. Please try again.</td></tr>';
+            }
+        }
+    </script>
+</body>
+</html>

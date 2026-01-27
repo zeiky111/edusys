@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level Climb Quiz - Wikahusayan</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background: #f0f0f0;
+            overflow: hidden;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+            z-index: 1000;
+        }
+
+        .back-btn:hover {
+            background: #45a049;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Tower container with relative positioning */
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            /* No background - transparent */
+            background: transparent;
+        }
+
+        /* Leaderboard sidebar */
+        .leaderboard-sidebar {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            width: 250px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 15;
+        }
+
+        .leaderboard-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .leaderboard-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            margin-bottom: 5px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .leaderboard-rank {
+            font-weight: bold;
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+        .leaderboard-info {
+            flex: 1;
+        }
+
+        .leaderboard-name {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        .leaderboard-score {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        /* Start button */
+        .start-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 25;
+        }
+
+        .start-btn:hover {
+            background: #45a049;
+            transform: translateX(-50%) scale(1.05);
+        }
+
+        /* Vertical ladder path using SVG */
+        .path-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .path {
+            fill: none;
+            stroke: #8B4513; /* Brown color for ladder */
+            stroke-width: 10;
+            stroke-linecap: round;
+        }
+
+        .rung {
+            stroke: #8B4513;
+            stroke-width: 8;
+            stroke-linecap: round;
+        }
+
+        /* Checkpoints - circular icons positioned absolutely */
+        .checkpoint {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: #FF9800;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+            z-index: 10;
+        }
+
+        .checkpoint:hover {
+            transform: scale(1.1);
+        }
+
+        .checkpoint.completed {
+            background: #4CAF50;
+        }
+
+        .checkpoint.current {
+            background: #2196F3;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Decorative elements - positioned absolutely */
+        .decoration {
+            position: absolute;
+            font-size: 30px;
+            z-index: 5;
+        }
+
+        .tree {
+            color: #228B22;
+        }
+
+        .rock {
+            color: #696969;
+        }
+
+        .signboard {
+            color: #8B4513;
+            font-size: 25px;
+        }
+
+        .character {
+            color: #FFD700;
+            font-size: 35px;
+        }
+
+        /* Player character */
+        .player {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            z-index: 20;
+            transition: all 0.5s ease-in-out;
+            /* Start at first checkpoint */
+            top: 100px;
+            left: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .player img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .player span {
+            font-size: 40px;
+        }
+
+        /* Quiz modal */
+        .quiz-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .quiz-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .question {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            padding: 15px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background 0.3s;
+        }
+
+        .option-btn:hover {
+            background: #0b7dda;
+        }
+
+        .score-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.9);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            z-index: 1000;
+        }
+
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .game-over-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .game-over h2 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+
+        .final-score {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .final-gold {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #FFD700;
+        }
+
+        .badge {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #FF9800;
+        }
+
+        .restart-btn {
+            padding: 15px 30px;
+            background: #FF9800;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 18px;
+            margin: 10px;
+        }
+
+        .restart-btn:hover {
+            background: #e68900;
+        }
+    </style>
+</head>
+<body>
+    <a href="select.html" class="back-btn">← Bumalik sa Pili ng Laro</a>
+
+    <div class="score-display">Puntos: <span id="score">0</span> | Ginto: <span id="gold">0</span></div>
+
+    <div class="game-container">
+        <div class="map-container">
+            <!-- Vertical ladder SVG -->
+            <svg class="path-svg" viewBox="0 0 1200 800">
+                <!-- Left rail -->
+                <line class="path" x1="600" y1="100" x2="600" y2="700"/>
+                <!-- Right rail -->
+                <line class="path" x1="650" y1="100" x2="650" y2="700"/>
+                <!-- Rungs -->
+                <line class="rung" x1="600" y1="150" x2="650" y2="150"/>
+                <line class="rung" x1="600" y1="200" x2="650" y2="200"/>
+                <line class="rung" x1="600" y1="250" x2="650" y2="250"/>
+                <line class="rung" x1="600" y1="300" x2="650" y2="300"/>
+                <line class="rung" x1="600" y1="350" x2="650" y2="350"/>
+                <line class="rung" x1="600" y1="400" x2="650" y2="400"/>
+                <line class="rung" x1="600" y1="450" x2="650" y2="450"/>
+                <line class="rung" x1="600" y1="500" x2="650" y2="500"/>
+                <line class="rung" x1="600" y1="550" x2="650" y2="550"/>
+                <line class="rung" x1="600" y1="600" x2="650" y2="600"/>
+                <line class="rung" x1="600" y1="650" x2="650" y2="650"/>
+            </svg>
+
+            <!-- Levels positioned vertically on the ladder -->
+            <div class="checkpoint current" id="level-0" style="top: 100px; left: 575px;">1</div>
+            <div class="checkpoint" id="level-1" style="top: 150px; left: 575px;">2</div>
+            <div class="checkpoint" id="level-2" style="top: 200px; left: 575px;">3</div>
+            <div class="checkpoint" id="level-3" style="top: 250px; left: 575px;">4</div>
+            <div class="checkpoint" id="level-4" style="top: 300px; left: 575px;">5</div>
+            <div class="checkpoint" id="level-5" style="top: 350px; left: 575px;">6</div>
+            <div class="checkpoint" id="level-6" style="top: 400px; left: 575px;">7</div>
+            <div class="checkpoint" id="level-7" style="top: 450px; left: 575px;">8</div>
+            <div class="checkpoint" id="level-8" style="top: 500px; left: 575px;">9</div>
+            <div class="checkpoint" id="level-9" style="top: 550px; left: 575px;">10</div>
+
+            <!-- Decorative elements -->
+            <div class="decoration tree" style="top: 50px; left: 300px;">🌳</div>
+            <div class="decoration tree" style="top: 400px; left: 200px;">🌲</div>
+            <div class="decoration tree" style="top: 250px; left: 800px;">🌳</div>
+            <div class="decoration rock" style="top: 300px; left: 500px;">🪨</div>
+            <div class="decoration rock" style="top: 550px; left: 700px;">🪨</div>
+            <div class="decoration signboard" style="top: 100px; left: 400px;">🏛️</div>
+            <div class="decoration signboard" style="top: 500px; left: 100px;">🏛️</div>
+            <div class="decoration character" style="top: 200px; left: 150px;">🧙‍♂️</div>
+            <div class="decoration character" style="top: 450px; left: 900px;">🧝‍♀️</div>
+
+            <!-- Player character -->
+            <div class="player" id="player">
+                <img id="player-avatar" src="" alt="Player Avatar">
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Modal -->
+    <div class="quiz-modal" id="quiz-modal" style="display: none;">
+        <div class="quiz-content">
+            <div class="question" id="question">Loading question...</div>
+            <div class="options" id="options"></div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div class="game-over" id="game-over" style="display: none;">
+        <div class="game-over-content">
+            <h2>Tapos Na ang Quest! 🎉</h2>
+            <div class="final-score">Final na Puntos: <span id="final-score">0</span></div>
+            <div class="final-gold">Ginto: <span id="final-gold">0</span></div>
+            <div class="badge">🏆 Quiz Champion Badge Earned!</div>
+            <button class="restart-btn" onclick="restartGame()">Laruin Uli</button>
+            <br>
+            <a href="select.html" style="color: #2196F3; text-decoration: none; font-size: 16px;">Pumili ng Ibang Laro</a>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let currentLevel = 0;
+        let score = 0;
+        let gold = 0;
+        let playerPosition = { top: 100, left: 575 }; // Start at first level
+
+        // Question data structure
+        const questions = [
+            {
+                id: 1,
+                question: "Ano ang pangngalan?",
+                choices: ["Action", "Object", "Color", "Feeling"],
+                answer: "Object"
+            },
+            {
+                id: 2,
+                question: "Ano ang pandiwa?",
+                choices: ["Noun", "Verb", "Adjective", "Pronoun"],
+                answer: "Verb"
+            },
+            {
+                id: 3,
+                question: "Ano ang pang-uri?",
+                choices: ["Noun", "Verb", "Adjective", "Adverb"],
+                answer: "Adjective"
+            },
+            {
+                id: 4,
+                question: "Ano ang panghalip?",
+                choices: ["Noun", "Verb", "Adjective", "Pronoun"],
+                answer: "Pronoun"
+            },
+            {
+                id: 5,
+                question: "Ano ang pang-abay?",
+                choices: ["Noun", "Verb", "Adjective", "Adverb"],
+                answer: "Adverb"
+            },
+            {
+                id: 6,
+                question: "Ano ang pangatnig?",
+                choices: ["Conjunction", "Noun", "Verb", "Adjective"],
+                answer: "Conjunction"
+            },
+            {
+                id: 7,
+                question: "Ano ang pang-ukol?",
+                choices: ["Preposition", "Noun", "Verb", "Adjective"],
+                answer: "Preposition"
+            },
+            {
+                id: 8,
+                question: "Ano ang pang-una?",
+                choices: ["Interjection", "Noun", "Verb", "Adjective"],
+                answer: "Interjection"
+            },
+            {
+                id: 9,
+                question: "Alin sa mga ito ang halimbawa ng pangngalan?",
+                choices: ["Run", "Book", "Blue", "Quickly"],
+                answer: "Book"
+            },
+            {
+                id: 10,
+                question: "Alin sa mga ito ang halimbawa ng pandiwa?",
+                choices: ["Happy", "Run", "Big", "Slowly"],
+                answer: "Run"
+            }
+        ];
+
+        // Level positions (vertical on ladder)
+        const levelPositions = [
+            { top: 100, left: 575 },
+            { top: 150, left: 575 },
+            { top: 200, left: 575 },
+            { top: 250, left: 575 },
+            { top: 300, left: 575 },
+            { top: 350, left: 575 },
+            { top: 400, left: 575 },
+            { top: 450, left: 575 },
+            { top: 500, left: 575 },
+            { top: 550, left: 575 }
+        ];
+
+        // Initialize game
+        function initGame() {
+            currentLevel = 0;
+            score = 0;
+            gold = 0;
+            updateScore();
+            updateLevels();
+            movePlayerToLevel(0);
+        }
+
+        // Update score display
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('gold').textContent = gold;
+        }
+
+        // Update level visual states
+        function updateLevels() {
+            for (let i = 0; i < levelPositions.length; i++) {
+                const level = document.getElementById(`level-${i}`);
+                level.classList.remove('current', 'completed');
+
+                if (i < currentLevel) {
+                    level.classList.add('completed');
+                    level.textContent = '✅';
+                } else if (i === currentLevel) {
+                    level.classList.add('current');
+                    level.textContent = '🏁';
+                } else {
+                    level.textContent = '🔒';
+                }
+            }
+        }
+
+        // Move player to level with smooth animation
+        function movePlayerToLevel(index) {
+            const position = levelPositions[index];
+            const player = document.getElementById('player');
+            player.style.top = position.top - 25 + 'px'; // Center the player
+            player.style.left = position.left - 25 + 'px';
+        }
+
+        // Show quiz for current level
+        function showQuiz() {
+            const question = questions[currentLevel];
+            const questionElement = document.getElementById('question');
+            const optionsContainer = document.getElementById('options');
+
+            // Display question
+            questionElement.textContent = question.question;
+
+            optionsContainer.innerHTML = '';
+
+            // Add choice buttons
+            question.choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = choice;
+                btn.onclick = () => selectAnswer(choice, question.answer);
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById('quiz-modal').style.display = 'flex';
+        }
+
+        // Handle answer selection
+        function selectAnswer(selectedChoice, correctAnswer) {
+            document.getElementById('quiz-modal').style.display = 'none';
+
+            if (selectedChoice === correctAnswer) {
+                // Correct answer: level up, increase score and gold
+                score += 10;
+                gold += 10;
+                updateScore();
+                currentLevel++;
+
+                if (currentLevel < levelPositions.length) {
+                    updateLevels();
+                    movePlayerToLevel(currentLevel);
+                    // Auto-show next quiz after a short delay
+                    setTimeout(() => {
+                        showQuiz();
+                    }, 1000);
+                } else {
+                    // Game completed
+                    endGame();
+                }
+            } else {
+                // Wrong answer: stay on current level
+                // Could add feedback here
+                setTimeout(() => {
+                    showQuiz();
+                }, 1000);
+            }
+        }
+
+        // End game
+        function endGame() {
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-gold').textContent = gold;
+            document.getElementById('game-over').style.display = 'flex';
+        }
+
+        // Restart game
+        function restartGame() {
+            document.getElementById('game-over').style.display = 'none';
+            initGame();
+            showQuiz();
+        }
+
+        // Add click listeners to levels
+        levelPositions.forEach((pos, index) => {
+            const level = document.getElementById(`level-${index}`);
+            level.addEventListener('click', () => {
+                if (index === currentLevel) {
+                    showQuiz();
+                }
+            });
+        });
+
+        // Load player avatar from profile
+        function loadPlayerAvatar() {
+            const avatarUrl = sessionStorage.getItem('studentAvatar');
+            const playerImg = document.getElementById('player-avatar');
+            if (avatarUrl) {
+                playerImg.src = avatarUrl;
+            } else {
+                // Fallback to emoji
+                playerImg.style.display = 'none';
+                const fallback = document.createElement('span');
+                fallback.textContent = '👤';
+                fallback.style.fontSize = '40px';
+                document.getElementById('player').appendChild(fallback);
+            }
+        }
+
+        // Start game on load
+        window.onload = function() {
+            loadPlayerAvatar();
+            initGame();
+            showQuiz();
+        };
+    </script>
+</body>
+</html>

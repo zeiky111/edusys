@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<title>Profile ng Mag-aaral - Wikahusayan</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script type="module">
+// Firebase imports
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+import { getAuth, signOut } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyD9khDPPquuztCUWLfzithwPmQFpI8t49g",
+  authDomain: "wikahusayan-quest.firebaseapp.com",
+  projectId: "wikahusayan-quest",
+  storageBucket: "wikahusayan-quest.firebasestorage.app",
+  messagingSenderId: "744849133114",
+  appId: "1:744849133114:web:31c5f34bc1ace7e3a5ef03"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// Make auth available globally
+window.auth = auth;
+window.signOut = signOut;
+</script>
+</head>
+<body>
+
+<!-- User Profile Dropdown -->
+<div class="user-profile">
+  <button class="profile-btn" onclick="toggleDropdown()">
+    <div id="user-avatar" class="user-avatar">
+      <img id="avatar-img" src="" alt="Avatar" style="display: none;">
+      <span id="avatar-fallback">👤</span>
+    </div>
+    <span id="user-name">Mag-aaral</span>
+  </button>
+  <div class="dropdown-menu" id="profile-dropdown">
+    <a href="#" onclick="viewProfile()">Profile</a>
+    <a href="#" onclick="logout()">Mag-logout</a>
+  </div>
+</div>
+
+<!-- Profile View -->
+<div id="profile-view" class="view" style="display:block;">
+  <h1>Profile ng Mag-aaral 👤</h1>
+
+  <div class="profile-container">
+    <div class="profile-card">
+      <div class="avatar-section">
+        <h3>Pumili ng Iyong Avatar</h3>
+        <div class="avatar-grid" id="avatar-grid">
+          <!-- Avatars will be loaded here -->
+        </div>
+        <div class="selected-avatar-display">
+          <p>Napiling Avatar:</p>
+          <div class="selected-avatar" id="selected-avatar">
+            <img src="" alt="Selected Avatar" style="display: none;">
+          </div>
+        </div>
+      </div>
+
+      <div class="name-section">
+        <h3>Baguhin ang Iyong Pangalan</h3>
+        <div class="name-input-container">
+          <input type="text" id="student-name-input" placeholder="Ilagay ang iyong pangalan" maxlength="50">
+          <button onclick="saveName()" class="save-btn">💾 I-save ang Pangalan</button>
+        </div>
+        <p class="name-hint">Ang iyong pangalan ay ipapakita sa buong platform</p>
+      </div>
+
+      <div class="profile-actions">
+        <a href="index.html" class="back-btn">⬅ Bumalik sa Dashboard</a>
+        <button onclick="saveProfile()" class="save-profile-btn">💾 I-save ang Profile</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// DiceBear API configuration
+const AVATAR_STYLES = ['adventurer', 'adventurer-neutral', 'avataaars', 'big-ears', 'big-ears-neutral', 'big-smile', 'bottts', 'croodles', 'croodles-neutral', 'female', 'female-neutral', 'fun-emoji', 'icons', 'identicon', 'initials', 'lorelei', 'lorelei-neutral', 'male', 'male-neutral', 'miniavs', 'open-peeps', 'personas', 'pixel-art', 'pixel-art-neutral', 'shapes'];
+const AVATAR_SEEDS = ['student1', 'student2', 'student3', 'student4', 'student5', 'student6', 'student7', 'student8', 'student9', 'student10', 'student11', 'student12'];
+
+function generateAvatarUrl(style, seed) {
+  return `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}&size=80&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+}
+
+// Load and display student's selected avatar (optimized for instant updates)
+function loadStudentAvatar() {
+  const savedAvatarUrl = sessionStorage.getItem('studentAvatar');
+  const avatarImg = document.getElementById('avatar-img');
+  const avatarFallback = document.getElementById('avatar-fallback');
+
+  if (savedAvatarUrl && avatarImg) {
+    // Show loading state briefly
+    if (avatarFallback) {
+      avatarFallback.textContent = '⏳';
+      avatarFallback.style.display = 'flex';
+    }
+
+    // Preload the image first for instant display
+    const img = new Image();
+    img.onload = function() {
+      avatarImg.src = savedAvatarUrl;
+      avatarImg.style.display = 'block';
+      if (avatarFallback) avatarFallback.style.display = 'none';
+    };
+    img.onerror = function() {
+      // Fallback to emoji if image fails to load
+      if (avatarImg) avatarImg.style.display = 'none';
+      if (avatarFallback) {
+        avatarFallback.textContent = '👤';
+        avatarFallback.style.display = 'flex';
+      }
+    };
+    img.src = savedAvatarUrl;
+  } else {
+    // Show fallback immediately if no avatar selected
+    if (avatarImg) avatarImg.style.display = 'none';
+    if (avatarFallback) {
+      avatarFallback.textContent = '👤';
+      avatarFallback.style.display = 'flex';
+    }
+  }
+}
+
+// Load profile data on page load
+document.addEventListener('DOMContentLoaded', function() {
+  loadAvatarOptions();
+  loadProfileData();
+
+  // Load user name from session storage for dropdown
+  const userName = sessionStorage.getItem('studentName') || 'Mag-aaral';
+  document.getElementById('user-name').textContent = userName;
+
+  // Load and display selected avatar
+  loadStudentAvatar();
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('profile-dropdown');
+    const profileBtn = document.querySelector('.profile-btn');
+    if (!profileBtn.contains(e.target)) {
+      dropdown.classList.remove('show');
+    }
+  });
+});
+
+function loadAvatarOptions() {
+  const avatarGrid = document.getElementById('avatar-grid');
+  avatarGrid.innerHTML = '';
+
+  AVATAR_SEEDS.forEach((seed, index) => {
+    const style = AVATAR_STYLES[index % AVATAR_STYLES.length];
+    const avatarUrl = generateAvatarUrl(style, seed);
+
+    const avatarOption = document.createElement('div');
+    avatarOption.className = 'avatar-option';
+    avatarOption.dataset.avatarUrl = avatarUrl;
+    avatarOption.onclick = () => selectAvatar(avatarUrl);
+
+    const img = document.createElement('img');
+    img.src = avatarUrl;
+    img.alt = `Avatar ${index + 1}`;
+    img.onload = () => {
+      avatarOption.appendChild(img);
+    };
+
+    avatarGrid.appendChild(avatarOption);
+  });
+}
+
+function loadProfileData() {
+  // Load saved name
+  const savedName = sessionStorage.getItem('studentName') || '';
+  document.getElementById('student-name-input').value = savedName;
+
+  // Load saved avatar
+  const savedAvatarUrl = sessionStorage.getItem('studentAvatar') || generateAvatarUrl('avataaars', 'default');
+  displaySelectedAvatar(savedAvatarUrl);
+  highlightSelectedAvatar(savedAvatarUrl);
+}
+
+function selectAvatar(avatarUrl) {
+  displaySelectedAvatar(avatarUrl);
+  highlightSelectedAvatar(avatarUrl);
+
+  // Immediately update the profile button avatar preview
+  const avatarImg = document.getElementById('avatar-img');
+  const avatarFallback = document.getElementById('avatar-fallback');
+
+  if (avatarImg) {
+    avatarImg.src = avatarUrl;
+    avatarImg.style.display = 'block';
+    if (avatarFallback) avatarFallback.style.display = 'none';
+  }
+}
+
+function displaySelectedAvatar(avatarUrl) {
+  const selectedAvatarDiv = document.getElementById('selected-avatar');
+  const img = selectedAvatarDiv.querySelector('img') || document.createElement('img');
+
+  img.src = avatarUrl;
+  img.alt = 'Napiling Avatar';
+  img.style.display = 'block';
+  img.style.width = '100%';
+  img.style.height = '100%';
+  img.style.borderRadius = '50%';
+  img.style.objectFit = 'cover';
+
+  selectedAvatarDiv.innerHTML = '';
+  selectedAvatarDiv.appendChild(img);
+}
+
+function highlightSelectedAvatar(selectedAvatarUrl) {
+  // Remove selected class from all avatars
+  document.querySelectorAll('.avatar-option').forEach(option => {
+    option.classList.remove('selected');
+  });
+
+  // Add selected class to the chosen avatar
+  document.querySelectorAll('.avatar-option').forEach(option => {
+    if (option.dataset.avatarUrl === selectedAvatarUrl) {
+      option.classList.add('selected');
+    }
+  });
+}
+
+function saveName() {
+  const nameInput = document.getElementById('student-name-input');
+  const newName = nameInput.value.trim();
+
+  if (newName === '') {
+    alert('Pakilagay ang iyong pangalan');
+    return;
+  }
+
+  if (newName.length > 50) {
+    alert('Ang pangalan ay dapat 50 karakter o mas kaunti');
+    return;
+  }
+
+  sessionStorage.setItem('studentName', newName);
+  document.getElementById('user-name').textContent = newName;
+
+  // Also refresh the avatar display in case it was affected
+  loadStudentAvatar();
+
+  alert('Matagumpay na nai-save ang pangalan! ✅');
+}
+
+function saveProfile() {
+  const selectedAvatarDiv = document.getElementById('selected-avatar');
+  const selectedImg = selectedAvatarDiv.querySelector('img');
+  const studentName = document.getElementById('student-name-input').value.trim();
+
+  if (studentName === '') {
+    alert('Pakilagay ang iyong pangalan bago i-save');
+    return;
+  }
+
+  if (!selectedImg || !selectedImg.src) {
+    alert('Pakipili ng avatar bago i-save');
+    return;
+  }
+
+  // Save avatar
+  sessionStorage.setItem('studentAvatar', selectedImg.src);
+
+  // Save name
+  sessionStorage.setItem('studentName', studentName);
+
+  // Update dropdown name
+  document.getElementById('user-name').textContent = studentName;
+
+  // Immediately update the profile button avatar
+  loadStudentAvatar();
+
+  alert('Matagumpay na nai-save ang profile! ✅');
+}
+
+function goBack() {
+  window.location.href = 'index.html';
+}
+
+function toggleDropdown() {
+  const dropdown = document.getElementById('profile-dropdown');
+  dropdown.classList.toggle('show');
+}
+
+function viewProfile() {
+  // Already on profile page, just close dropdown
+  document.getElementById('profile-dropdown').classList.remove('show');
+}
+
+function logout() {
+  if (confirm('Sigurado ka bang mag-logout?')) {
+    signOut(auth).then(() => {
+      // Sign-out successful, clear local storage and redirect
+      sessionStorage.clear();
+      localStorage.clear();
+      window.location.href = '../public/index.html';
+    }).catch((error) => {
+      // An error happened
+      console.error('Error signing out:', error);
+      // Still clear storage and redirect even if Firebase signout fails
+      sessionStorage.clear();
+      localStorage.clear();
+      window.location.href = '../public/index.html';
+    });
+  }
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1 @@
+- [x] Change the button in select.html for "Level Climb Quiz" to point to ladder_quiz.html instead of quest_map.html

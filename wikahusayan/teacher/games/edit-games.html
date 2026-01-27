@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<title>Piliin ang Laro na I-edit - Wikahusayan Quest</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/teacher.css">
+<script type="module">
+// Firebase imports
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyD9khDPPquuztCUWLfzithwPmQFpI8t49g",
+  authDomain: "wikahusayan-quest.firebaseapp.com",
+  projectId: "wikahusayan-quest",
+  storageBucket: "wikahusayan-quest.firebasestorage.app",
+  messagingSenderId: "744849133114",
+  appId: "1:744849133114:web:31c5f34bc1ace7e3a5ef03"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// Check authentication
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    // Not authenticated, redirect to login
+    window.location.href = '../../public/index.html';
+  }
+});
+</script>
+</head>
+<body>
+<a href="../index.html" style="position: absolute; top: 20px; left: 20px; background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; text-decoration: none; display: inline-block;">← Bumalik sa Dashboard</a>
+
+<div style="max-width: 1200px; margin: 0 auto; padding: 20px; text-align: center;">
+  <h1 style="color: #333; margin-bottom: 10px;">Piliin ang Laro na I-edit 🎮</h1>
+  <p style="color: #666; font-size: 18px;">Pumili ng laro upang i-edit ang mga tanong at content.</p>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 30px;">
+    <div style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); border-radius: 15px; padding: 30px; text-align: center; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 15px 40px rgba(0,0,0,0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.2)';">
+      <h2 style="font-size: 24px; margin-bottom: 15px;">🪜 Ladder Quiz</h2>
+      <p style="font-size: 16px; margin-bottom: 20px; line-height: 1.5;">I-edit ang mga tanong para sa Ladder-based Grammar Quiz. Pumili kung multiple choice o text input.</p>
+      <button onclick="editLadder()" style="background: #fff; color: #FF9800; border: none; padding: 12px 30px; border-radius: 25px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='#f0f0f0'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#fff'; this.style.transform='scale(1)';">I-edit ang Ladder Quiz</button>
+    </div>
+
+    <div style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); border-radius: 15px; padding: 30px; text-align: center; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 15px 40px rgba(0,0,0,0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.2)';">
+      <h2 style="font-size: 24px; margin-bottom: 15px;">🧩 Drag & Drop Puzzle</h2>
+      <p style="font-size: 16px; margin-bottom: 20px; line-height: 1.5;">I-edit ang mga item para sa Collaborative Matching Game. Ayusin ang mga hakbang na dapat ayusin ng grupo.</p>
+      <button onclick="editPuzzle()" style="background: #fff; color: #FF9800; border: none; padding: 12px 30px; border-radius: 25px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='#f0f0f0'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#fff'; this.style.transform='scale(1)';">I-edit ang Puzzle</button>
+    </div>
+
+    <div style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); border-radius: 15px; padding: 30px; text-align: center; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 15px 40px rgba(0,0,0,0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.2)';">
+      <h2 style="font-size: 24px; margin-bottom: 15px;">⚡ Speed Challenge</h2>
+      <p style="font-size: 16px; margin-bottom: 20px; line-height: 1.5;">I-edit ang mga tanong para sa Timed Quiz. Magdagdag ng mga bagong tanong na may oras.</p>
+      <button onclick="editChallenge()" style="background: #fff; color: #FF9800; border: none; padding: 12px 30px; border-radius: 25px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='#f0f0f0'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#fff'; this.style.transform='scale(1)';">I-edit ang Challenge</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Navigation functions
+function editLadder() {
+  window.location.href = 'edit-ladder.html';
+}
+
+function editPuzzle() {
+  window.location.href = 'edit-matching.html';
+}
+
+function editChallenge() {
+  window.location.href = 'edit-quiz.html';
+}
+
+// Make functions globally accessible
+window.editLadder = editLadder;
+window.editPuzzle = editPuzzle;
+window.editChallenge = editChallenge;
+</script>

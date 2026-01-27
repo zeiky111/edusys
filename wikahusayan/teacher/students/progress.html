@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<title>Student Progress</title>
+<link href="../css/teacher.css" rel="stylesheet">
+<script type="module">
+// Firebase imports
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyD9khDPPquuztCUWLfzithwPmQFpI8t49g",
+  authDomain: "wikahusayan-quest.firebaseapp.com",
+  projectId: "wikahusayan-quest",
+  storageBucket: "wikahusayan-quest.firebasestorage.app",
+  messagingSenderId: "744849133114",
+  appId: "1:744849133114:web:31c5f34bc1ace7e3a5ef03"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// Check authentication
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    // Not authenticated, redirect to login
+    window.location.href = '../../public/index.html';
+  }
+});
+</script>
+</head>
+<body>
+
+<div class="view" style="display:block;">
+  <button class="back-btn" onclick="window.location.href='../index.html'">⬅ Bumalik</button>
+  <h2>Student Progress</h2>
+  <table class="teacher-table">
+    <thead>
+      <tr>
+        <th>Student Name</th>
+        <th>Lesson Completed</th>
+        <th>Game Score</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Juan Dela Cruz</td><td>2/4</td><td>85%</td></tr>
+      <tr><td>Maria Santos</td><td>3/4</td><td>92%</td></tr>
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>

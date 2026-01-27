@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<title>Topics Test</title>
+</head>
+<body>
+<h1>Testing Topics Functionality</h1>
+<div id="topics-container">
+<p>Loading topics...</p>
+</div>
+
+<script type="module">
+// Firebase imports
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+import { getFirestore, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyD9khDPPquuztCUWLfzithwPmQFpI8t49g",
+  authDomain: "wikahusayan-quest.firebaseapp.com",
+  projectId: "wikahusayan-quest",
+  storageBucket: "wikahusayan-quest.firebasestorage.app",
+  messagingSenderId: "744849133114",
+  appId: "1:744849133114:web:31c5f34bc1ace7e3a5ef03"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Global variables for authentication state
+let currentUser = null;
+let isAuthenticated = false;
+
+// Make auth available globally
+window.auth = auth;
+window.db = db;
+
+console.log('Firebase initialized in test');
+
+// Monitor auth state
+onAuthStateChanged(auth, (user) => {
+  console.log('🔥 Test onAuthStateChanged fired with user:', user ? 'exists' : 'null');
+
+  currentUser = user;
+  isAuthenticated = !!user;
+
+  if (user) {
+    console.log('User authenticated, loading topics...');
+    // Load topics when authenticated
+    loadTopics();
+  } else {
+    document.getElementById('topics-container').innerHTML = '<p>Not authenticated. Please log in first.</p>';
+  }
+});
+
+// Load topics from Firebase and display them
+async function loadTopics() {
+  const container = document.getElementById('topics-container');
+  if (!container) return;
+
+  try {
+    let hasTopics = false;
+
+    if (isAuthenticated && currentUser) {
+      console.log('Loading topics from Firebase...');
+
+      // Load from topics collection first
+      const querySnapshot = await getDocs(collection(db, 'topics'));
+
+      if (!querySnapshot.empty) {
+        container.innerHTML = '<h2>Topics from topics collection:</h2>';
+        hasTopics = true;
+
+        querySnapshot.forEach((doc) => {
+          const topic = doc.data();
+          const card = document.createElement('div');
+          card.style.border = '1px solid #ccc';
+          card.style.padding = '10px';
+          card.style.margin = '10px';
+          card.innerHTML = `
+            <h3>${topic.title}</h3>
+            <p>${topic.description}</p>
+            <p><strong>ID:</strong> ${topic.id}</p>
+          `;
+          container.appendChild(card);
+        });
+
+        console.log(`✅ Loaded ${querySnapshot.size} topics from topics collection`);
+      } else {
+        // If no topics in topics collection, try loading from game_content collection
+        console.log('No topics found in topics collection, checking game_content...');
+        const gameContentQuery = query(
+          collection(db, 'game_content'),
+          where('gameType', '==', 'topic')
+        );
+        const gameContentSnapshot = await getDocs(gameContentQuery);
+
+        if (!gameContentSnapshot.empty) {
+          container.innerHTML = '<h2>Topics from game_content collection:</h2>';
+          hasTopics = true;
+
+          gameContentSnapshot.forEach((doc) => {
+            const content = doc.data();
+            const topic = content.content.topicData || content.content;
+            const card = document.createElement('div');
+            card.style.border = '1px solid #ccc';
+            card.style.padding = '10px';
+            card.style.margin = '10px';
+            card.innerHTML = `
+              <h3>${topic.title}</h3>
+              <p>${topic.description}</p>
+              <p><strong>ID:</strong> ${topic.id}</p>
+            `;
+            container.appendChild(card);
+          });
+
+          console.log(`✅ Loaded ${gameContentSnapshot.size} topics from game_content collection`);
+        }
+      }
+    }
+
+    if (!hasTopics) {
+      container.innerHTML = '<p>No topics found in database.</p>';
+      console.log('No topics found in database');
+    }
+  } catch (error) {
+    console.error('❌ Error loading topics:', error);
+    container.innerHTML = `<p>Error loading topics: ${error.message}</p>`;
+  }
+}
+</script>
+</body>
+</html>

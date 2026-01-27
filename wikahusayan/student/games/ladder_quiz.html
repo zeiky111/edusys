@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hagdan Quiz - Wikahusayan</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            overflow: hidden;
+            animation: fadeIn 1s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .ladder-container {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 100vh;
+            z-index: 5;
+        }
+
+        .ladder {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 100%;
+            background: linear-gradient(to bottom, #8B4513 0%, #A0522D 50%, #8B4513 100%);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .rung {
+            position: absolute;
+            width: 80px;
+            height: 8px;
+            background: linear-gradient(90deg, #8B4513 0%, #A0522D 100%);
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .step {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+            border: 4px solid #fff;
+            border-radius: 50%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .step.completed {
+            background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+            transform: translateX(-50%) scale(1.1);
+        }
+
+        .step.current {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            animation: pulse 1s infinite;
+            transform: translateX(-50%) scale(1.2);
+        }
+
+        .step.locked {
+            background: linear-gradient(135deg, #9E9E9E 0%, #757575 100%);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+        }
+
+        .player {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 40px;
+            z-index: 15;
+            transition: all 0.8s ease;
+        }
+
+        .start-btn {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg,#00b894 0%,#019875 100%);
+            color: white;
+            border: none;
+            padding: 15px 34px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 700;
+            z-index: 1000;
+            box-shadow: 0 8px 20px rgba(2, 136, 209, 0.15), inset 0 -2px 0 rgba(0,0,0,0.05);
+            transition: transform .14s ease, box-shadow .14s ease, opacity .12s ease;
+        }
+
+        .start-btn:hover { transform: translateX(-50%) translateY(-3px); box-shadow: 0 12px 26px rgba(2,136,209,0.18); }
+        .start-btn:active { transform: translateX(-50%) translateY(0); }
+
+        .score-display {
+            position: absolute;
+            top: 70px;
+            left: 20px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            padding: 15px 25px;
+            border-radius: 25px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+            z-index: 20;
+            box-shadow: 0 6px 20px rgba(255,215,0,0.3);
+            border: 3px solid #fff;
+            animation: bounceIn 0.6s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .score-display::before {
+            content: '🏆';
+            font-size: 24px;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes scorePop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); color: #FFD700; text-shadow: 0 0 10px #FFD700; }
+            100% { transform: scale(1); }
+        }
+
+        .quiz-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+            animation: fadeInModal 0.3s ease-out;
+        }
+
+        @keyframes fadeInModal {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .quiz-content {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 550px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .question {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(33,150,243,0.3);
+            margin: 5px;
+        }
+
+        .option-btn:hover {
+            background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(33,150,243,0.4);
+        }
+
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .game-over-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <button class="back-btn" onclick="window.location.href='select.html'">← Bumalik</button>
+        
+        <div class="score-display">
+            <span id="score">0</span> pts
+        </div>
+
+        <div class="ladder-container">
+            <div class="ladder"></div>
+            
+
+
+            <!-- Rungs -->
+            <div class="rung" style="bottom: 150px;"></div>
+            <div class="rung" style="bottom: 220px;"></div>
+            <div class="rung" style="bottom: 290px;"></div>
+            <div class="rung" style="bottom: 360px;"></div>
+            <div class="rung" style="bottom: 430px;"></div>
+            <div class="rung" style="bottom: 500px;"></div>
+            <div class="rung" style="bottom: 570px;"></div>
+
+            <!-- Steps -->
+            <div class="step current" id="step-0" style="bottom: 50px;">1</div>
+            <div class="step locked" id="step-1" style="bottom: 120px;">2</div>
+            <div class="step locked" id="step-2" style="bottom: 190px;">3</div>
+            <div class="step locked" id="step-3" style="bottom: 260px;">4</div>
+            <div class="step locked" id="step-4" style="bottom: 330px;">5</div>
+            <div class="step locked" id="step-5" style="bottom: 400px;">6</div>
+            <div class="step locked" id="step-6" style="bottom: 470px;">7</div>
+            <div class="step locked" id="step-7" style="bottom: 540px;">8</div>
+
+            <!-- Player -->
+            <div class="player" id="player" style="bottom: 20px;">
+                <img id="player-avatar" src="" alt="Player Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: none;">
+                <span id="player-fallback">🧙‍♂️</span>
+            </div>
+        </div>
+
+        <button class="start-btn" id="start-btn">Simulan ang Laro</button>
+    </div>
+
+    <!-- Quiz Modal -->
+    <div class="quiz-modal" id="quiz-modal">
+        <div class="quiz-content">
+            <div class="question" id="question">Tanong dito...</div>
+            <div class="options" id="options">
+                <!-- Options will be generated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div class="game-over" id="game-over">
+        <div class="game-over-content">
+            <h2>🎉 Tapos na ang Laro!</h2>
+            <div class="final-score">Puntos: <span id="final-score">0</span></div>
+            <button class="option-btn" onclick="window.location.href='select.html'">Bumalik sa Game Selection</button>
+        </div>
+    </div>
+
+    <script type="module">
+        console.log('Ladder Quiz script loaded');
+
+        // Inline Firebase initialization to avoid import issues
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc, addDoc, updateDoc, setDoc, orderBy, limit } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9khDPPquuztCUWLfzithwPmQFpI8t49g",
+            authDomain: "wikahusayan-quest.firebaseapp.com",
+            projectId: "wikahusayan-quest",
+            storageBucket: "wikahusayan-quest.firebasestorage.app",
+            messagingSenderId: "744849133114",
+            appId: "1:744849133114:web:31c5f34bc1ace7e3a5ef03"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Helper function for badge checking
+        function checkForNewBadges(totalPoints, existingBadges) {
+            const newBadges = [];
+
+            const badgeThresholds = [
+                { points: 100, badge: 'Bronze Scholar' },
+                { points: 250, badge: 'Silver Scholar' },
+                { points: 500, badge: 'Gold Scholar' },
+                { points: 1000, badge: 'Platinum Scholar' },
+                { points: 2000, badge: 'Diamond Scholar' },
+                { points: 5000, badge: 'Master Scholar' }
+            ];
+
+            badgeThresholds.forEach(({ points, badge }) => {
+                if (totalPoints >= points && !existingBadges.includes(badge)) {
+                    newBadges.push(badge);
+                }
+            });
+
+            // Special badges for game types
+            if (totalPoints >= 100 && !existingBadges.includes('First Steps')) {
+                newBadges.push('First Steps');
+            }
+
+            if (totalPoints >= 500 && !existingBadges.includes('Knowledge Seeker')) {
+                newBadges.push('Knowledge Seeker');
+            }
+
+            return newBadges;
+        }
+
+
+
+        // Firebase helper functions
+        async function saveGameScore(userId, gameType, score, displayName = null, groupName = null) {
+            console.log(`🔄 saveGameScore called with:`, { userId, gameType, score, displayName, groupName });
+
+            try {
+                console.log(`🔄 Updating leaderboard for ${gameType} with score: ${score}`);
+
+                // Use separate collection for ladder quiz
+                const leaderboardRef = collection(db, 'leaderboard_ladder');
+                const q = query(leaderboardRef, where('userId', '==', userId));
+                const querySnapshot = await getDocs(q);
+
+                let existingData = null;
+                let docRef = null;
+
+                if (!querySnapshot.empty) {
+                    // Update existing player
+                    docRef = querySnapshot.docs[0].ref;
+                    existingData = querySnapshot.docs[0].data();
+                    console.log('📝 Updating existing player:', existingData.displayName);
+                } else {
+                    // Create new player entry
+                    console.log('🆕 Creating new player entry');
+                }
+
+                // For ladder quiz, save the score
+                const updateData = {
+                    userId: userId,
+                    displayName: displayName || existingData?.displayName || 'Anonymous',
+                    groupName: groupName || existingData?.groupName || 'No Group',
+                    score: Math.max(existingData?.score || 0, score),
+                    updatedAt: new Date()
+                };
+
+                updateData.totalPoints = updateData.score;
+                updateData.ladderPoints = updateData.score;
+
+                console.log(`📊 Ladder quiz score: ${updateData.score}`);
+
+                // Initialize badges array if not existing
+                if (!existingData?.badges) {
+                    updateData.badges = [];
+                }
+
+                // Check for new badges based on total points
+                const newBadges = checkForNewBadges(updateData.totalPoints, existingData?.badges || []);
+                if (newBadges.length > 0) {
+                    updateData.badges = [...(existingData?.badges || []), ...newBadges];
+                    console.log('🏆 New badges earned:', newBadges);
+                }
+
+                if (docRef) {
+                    // Update existing document
+                    await updateDoc(docRef, updateData);
+                } else {
+                    // Create new document
+                    updateData.createdAt = new Date();
+                    await addDoc(leaderboardRef, updateData);
+                }
+
+                // Also keep a per-user aggregated points document for other parts of the app
+                try {
+                    const userPointsRef = doc(db, 'user_points', userId);
+                    const userPointsData = {
+                        userId: userId,
+                        displayName: updateData.displayName,
+                        groupName: updateData.groupName,
+                        totalPoints: updateData.totalPoints || 0,
+                        ladderPoints: updateData.ladderPoints || 0,
+                        quizPoints: updateData.quizPoints || 0,
+                        matchingPoints: updateData.matchingPoints || 0,
+                        updatedAt: new Date()
+                    };
+
+                    // Use setDoc to create or overwrite the user's points document
+                    await setDoc(userPointsRef, userPointsData, { merge: true });
+                    console.log('✅ user_points document updated for', userId);
+                } catch (err) {
+                    console.error('❌ Failed to update user_points doc:', err);
+                }
+                console.log('✅ Leaderboard updated successfully');
+                console.log('🚀 saveGameScore COMPLETED');
+                return updateData;
+            } catch (error) {
+                console.error('❌ Error saving game score:', error);
+                console.error('🚀 saveGameScore FAILED with error:', error.message);
+                throw error;
+            }
+        }
+
+        async function saveGameProgress(userId, gameType, progressData) {
+            try {
+                const progressRef = collection(db, 'game_progress');
+                const progressDoc = {
+                    userId,
+                    gameType,
+                    ...progressData,
+                    timestamp: new Date()
+                };
+                
+                await addDoc(progressRef, progressDoc);
+            } catch (error) {
+                console.error('Error saving game progress:', error);
+            }
+        }
+
+        let currentUser = null;
+        let currentStep = 0;
+        let score = 0;
+        let gameStarted = false;
+
+        // Questions database - will be loaded from Firebase
+        let questions = [];
+
+        // Default fallback questions
+        const defaultQuestions = [
+            {
+                title: "Pangngalan",
+                sentence: "Ang demokrasya ay patuloy na hinuhubog ng mamamayan sa pamamagitan ng pakikilahok.",
+                question: "Tukuyin mula sa pangungusap ang pangngalan.",
+                options: ["demokrasya, mamamayan, pakikilahok", "hinuhubog, patuloy", "ang, ng, sa", "ay, na"],
+                correct: 0,
+                isMultipleChoice: true
+            },
+            {
+                title: "Panghalip",
+                sentence: "Siya ay nagtungo sa kanilang tahanan upang makita niya ang kanyang pamilya.",
+                question: "Ano ang mga panghalip sa pangungusap?",
+                options: ["nagtungo, makita", "siya, kanilang, niya, kanyang", "tahanan, pamilya", "sa, upang, ang"],
+                correct: 1,
+                isMultipleChoice: true
+            },
+            {
+                title: "Pandiwa",
+                sentence: "Ang mga estudyante ay nag-aral ng mabuti para sa pagsusulit.",
+                question: "Ano ang pandiwa sa pangungusap?",
+                options: ["estudyante, pagsusulit", "mga, ang, ng", "nag-aral", "mabuti, para"],
+                correct: 2,
+                isMultipleChoice: true
+            },
+            {
+                title: "Pang-uri",
+                sentence: "Ang matalinong bata ay sumagot ng tama sa mahirap na tanong.",
+                question: "Tukuyin ang mga pang-uri sa pangungusap.",
+                options: ["matalinong, mahirap", "bata, tanong", "sumagot, tama", "ang, sa, na"],
+                correct: 0,
+                isMultipleChoice: true
+            },
+            {
+                title: "Pang-abay",
+                sentence: "Mabilis na tumakbo ang atleta patungo sa finish line.",
+                question: "Ano ang pang-abay sa pangungusap?",
+                options: ["tumakbo, patungo", "atleta, finish line", "mabilis", "ang, sa, na"],
+                correct: 2,
+                isMultipleChoice: true
+            },
+            {
+                title: "Pang-ukol",
+                sentence: "Pumunta kami sa paaralan para sa graduation ceremony.",
+                question: "Tukuyin ang mga pang-ukol sa pangungusap.",
+                options: ["pumunta, graduation", "kami, paaralan, ceremony", "sa, para sa", "ang, ng"],
+                correct: 2,
+                isMultipleChoice: true
+            },
+            {
+                title: "Pangatnig",
+                sentence: "Mag-aral ka ng mabuti at makakakuha ka ng mataas na marka.",
+                question: "Ano ang pangatnig sa pangungusap?",
+                options: ["mag-aral, makakakuha", "mabuti, mataas", "at", "ka, ng, na"],
+                correct: 2,
+                isMultipleChoice: true
+            },
+            {
+                title: "Pandamdam",
+                sentence: "Wow! Napakaganda ng inyong proyekto sa klase.",
+                question: "Ano ang pandamdam sa pangungusap?",
+                options: ["napakaganda, proyekto", "wow", "inyong, klase", "ng, sa"],
+                correct: 1,
+                isMultipleChoice: true
+            }
+        ];
+
+        function startGame() {
+            console.log('startGame called, currentUser:', currentUser);
+            console.log('Questions available:', !!questions, 'Length:', questions ? questions.length : 0);
+
+            if (!currentUser) {
+                window.location.href = '../../index.html';
+                return;
+            }
+
+            // Check if questions are loaded
+            if (!questions || questions.length === 0) {
+                console.log('Questions not loaded yet, waiting...');
+                alert('Loading questions, please wait...');
+                return;
+            }
+
+            gameStarted = true;
+            console.log('Game started, hiding start button');
+            document.getElementById('start-btn').style.display = 'none';
+
+            // Automatically start the first quiz
+            startQuiz(0);
+        }
+
+        // Make function global for onclick attribute
+        window.startGame = startGame;
+
+        function startQuiz(stepIndex) {
+            console.log('startQuiz called with', stepIndex, 'gameStarted:', gameStarted, 'currentStep:', currentStep);
+            if (!gameStarted || stepIndex !== currentStep) return;
+
+            const modal = document.getElementById('quiz-modal');
+            const question = document.getElementById('question');
+            const options = document.getElementById('options');
+
+            const q = questions[stepIndex];
+            question.innerHTML = `
+                <h3>${q.title}</h3>
+                <p><strong>Pangungusap:</strong> ${q.sentence}</p>
+                <p>${q.question}</p>
+            `;
+            options.innerHTML = '';
+
+            if (q.isMultipleChoice === false) {
+                // Text input question
+                const inputContainer = document.createElement('div');
+                inputContainer.style.cssText = 'width: 100%; text-align: center; margin-top: 20px;';
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = 'Ilagay ang iyong sagot...';
+                input.style.cssText = 'width: 80%; padding: 15px; font-size: 18px; border: 2px solid #2196F3; border-radius: 12px; text-align: center; margin-bottom: 20px;';
+                input.id = 'text-answer-input';
+
+                const submitBtn = document.createElement('button');
+                submitBtn.className = 'option-btn';
+                submitBtn.textContent = 'Isumite ang Sagot';
+                submitBtn.style.cssText = 'padding: 15px 30px; font-size: 18px; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); color: white; border: none; border-radius: 12px; cursor: pointer;';
+                submitBtn.onclick = () => {
+                    const answer = input.value.trim().toLowerCase();
+                    const correctAnswer = q.correctAnswer ? q.correctAnswer.toLowerCase() : '';
+                    selectAnswer(answer === correctAnswer ? 0 : -1, stepIndex);
+                };
+
+                inputContainer.appendChild(input);
+                inputContainer.appendChild(submitBtn);
+                options.appendChild(inputContainer);
+
+                // Focus on input
+                setTimeout(() => input.focus(), 100);
+            } else {
+                // Multiple choice question
+                q.options.forEach((option, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    btn.textContent = option;
+                    btn.onclick = () => selectAnswer(index, stepIndex);
+                    options.appendChild(btn);
+                });
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function selectAnswer(selectedIndex, stepIndex) {
+            const modal = document.getElementById('quiz-modal');
+
+            const q = questions[stepIndex];
+            let isCorrect = false;
+
+            if (q.isMultipleChoice === false) {
+                // For text input, selectedIndex will be 0 for correct, -1 for incorrect
+                isCorrect = (selectedIndex === 0);
+            } else {
+                // For multiple choice, check against correct index
+                isCorrect = (selectedIndex === q.correct);
+            }
+
+            if (isCorrect) {
+                score += 20;
+                animateScore();
+
+                // Mark current step as completed
+                document.getElementById(`step-${stepIndex}`).className = 'step completed';
+
+                // Move to next step
+                currentStep++;
+                if (currentStep < 8) {
+                    document.getElementById(`step-${currentStep}`).className = 'step current';
+                    movePlayer(currentStep);
+                } else {
+                    endGame();
+                }
+            }
+
+            modal.style.display = 'none';
+        }
+
+        function animateScore() {
+            const scoreDisplay = document.getElementById('score');
+            scoreDisplay.textContent = score;
+            scoreDisplay.style.animation = 'none';
+            setTimeout(() => {
+                scoreDisplay.style.animation = 'scorePop 0.5s ease-out';
+            }, 10);
+        }
+
+        function movePlayer(step) {
+            const player = document.getElementById('player');
+            const positions = [20, 90, 160, 230, 300, 370, 440, 510];
+            player.style.bottom = positions[step] + 'px';
+        }
+        // Save score to Firebase (detailed game progress only)
+        async function saveScoreToFirebase(finalScore) {
+            console.log('🔄 saveScoreToFirebase called with score:', finalScore);
+            console.log('🔄 currentUser:', currentUser);
+
+            try {
+                // Save detailed game progress (only if logged in)
+                if (currentUser) {
+                    await saveGameProgress(currentUser.uid, 'ladder_quiz', { score: finalScore, step: currentStep, timestamp: new Date() });
+                }
+
+                // Update leaderboard with points (allow anonymous)
+                const userId = currentUser ? currentUser.uid : getAnonymousUserId();
+                const displayName = currentUser?.displayName || sessionStorage.getItem('studentName') || localStorage.getItem('studentName') || 'Anonymous';
+                const groupName = sessionStorage.getItem('studentGroup') || localStorage.getItem('studentGroup') || 'No Group';
+
+                console.log('🔄 Calling saveGameScore with:', {
+                    userId: userId,
+                    gameType: 'ladder_quiz',
+                    score: finalScore,
+                    displayName: displayName,
+                    groupName: groupName
+                });
+
+                await saveGameScore(userId, 'ladder_quiz', finalScore, displayName, groupName);
+
+                console.log('✅ Ladder quiz score saved to leaderboard:', finalScore);
+            } catch (error) {
+                console.error('❌ Error saving ladder quiz score:', error);
+                console.error('❌ Error details:', error.message);
+            }
+        }
+
+        function endGame() {
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('game-over').style.display = 'flex';
+
+            // Save score to Firebase
+            saveScoreToFirebase(score);
+        }
+
+        // Load avatar on page load
+        function loadPlayerAvatar() {
+            const avatarImg = document.getElementById('player-avatar');
+            const fallback = document.getElementById('player-fallback');
+
+            // Priority: profile selection (sessionStorage) -> Firebase photoURL -> initials fallback
+            const profileAvatar = sessionStorage.getItem('studentAvatar');
+            if (profileAvatar) {
+                avatarImg.src = profileAvatar;
+                avatarImg.style.display = 'block';
+                fallback.style.display = 'none';
+                return;
+            }
+
+            if (currentUser && currentUser.photoURL) {
+                avatarImg.src = currentUser.photoURL;
+                avatarImg.style.display = 'block';
+                fallback.style.display = 'none';
+                return;
+            }
+
+            // Use initial (from localStorage studentName or Firebase displayName) as fallback
+            const name = localStorage.getItem('studentName') || (currentUser && currentUser.displayName) || '';
+            if (name) {
+                avatarImg.style.display = 'none';
+                fallback.textContent = name.charAt(0).toUpperCase();
+                fallback.style.display = 'block';
+            } else {
+                avatarImg.style.display = 'none';
+                fallback.textContent = '👤';
+                fallback.style.display = 'block';
+            }
+        }
+
+        // Monitor auth state and load questions
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            console.log('Auth state changed, user:', user);
+
+            // Load questions first
+            await loadQuestionsFromFirebase();
+            console.log('Questions loaded, questions array:', questions);
+
+            loadPlayerAvatar();
+
+            const startBtn = document.getElementById('start-btn');
+            if (currentUser) {
+                startBtn.textContent = 'Simulan ang Laro';
+                startBtn.style.opacity = '1';
+                startBtn.disabled = false;
+            } else {
+                startBtn.textContent = 'Mag-login para magsimula';
+                startBtn.style.opacity = '0.6';
+                startBtn.disabled = true;
+            }
+        });
+
+        // Load questions from Firebase
+        async function loadQuestionsFromFirebase() {
+            try {
+                console.log('Loading questions from Firebase...');
+                console.log('Current user authenticated:', !!currentUser);
+
+                if (!currentUser) {
+                    console.log('User not authenticated, using default questions');
+                    questions = defaultQuestions;
+                    return;
+                }
+
+                const questionsRef = collection(db, 'game_content');
+                console.log('Collection reference created');
+
+                // Get all documents and filter for ladder_quiz type
+                const allDocs = await getDocs(questionsRef);
+                console.log('Total documents in game_content:', allDocs.size);
+
+                const ladderQuizDocs = [];
+                allDocs.forEach(doc => {
+                    const data = doc.data();
+                    console.log('Document:', doc.id, 'Data:', data);
+                    if (data.gameType === 'ladder_quiz') {
+                        ladderQuizDocs.push({ id: doc.id, data: data });
+                    }
+                });
+
+                console.log('Ladder quiz documents found:', ladderQuizDocs.length);
+
+                if (ladderQuizDocs.length > 0) {
+                    // Sort by updatedAt and get the most recent
+                    const sortedDocs = ladderQuizDocs.sort((a, b) => {
+                        const aTime = a.data.updatedAt?.toDate?.() || new Date(a.data.updatedAt || 0);
+                        const bTime = b.data.updatedAt?.toDate?.() || new Date(b.data.updatedAt || 0);
+                        return bTime - aTime;
+                    });
+
+                    const latestDoc = sortedDocs[0];
+                    console.log('Using latest document:', latestDoc.id, latestDoc.data);
+                    questions = latestDoc.data.content?.questions || defaultQuestions;
+                    console.log('Loaded questions count:', questions.length);
+                } else {
+                    console.log('No ladder quiz documents found, using default questions');
+                    questions = defaultQuestions;
+                }
+            } catch (error) {
+                console.error('Error loading questions:', error);
+                console.error('Error details:', error.message, error.code);
+                questions = defaultQuestions;
+            }
+        }
+
+        // Utility function to get anonymous user ID
+        function getAnonymousUserId() {
+            let userId = localStorage.getItem('anonymousUserId');
+            if (!userId) {
+                userId = 'anon_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('anonymousUserId', userId);
+            }
+            return userId;
+        }
+
+        // Setup initial listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initially set loading state
+            const startBtn = document.getElementById('start-btn');
+            startBtn.style.opacity = '0.6';
+            startBtn.textContent = 'Loading...';
+            startBtn.disabled = true;
+
+            // Ensure no inline onclick is interfering
+            startBtn.removeAttribute('onclick');
+            startBtn.style.pointerEvents = 'auto';
+
+            // Centralized click handler: either start or redirect to login
+            startBtn.addEventListener('click', function (e) {
+                if (currentUser) {
+                    startGame();
+                } else {
+                    window.location.href = '../../index.html';
+                }
+            });
+
+            // Add click listeners for steps
+            for (let i = 0; i < 8; i++) {
+                const step = document.getElementById(`step-${i}`);
+                if (step) {
+                    step.addEventListener('click', () => startQuiz(i));
+                }
+            }
+        });
+    </script>
+</body>
+</html>

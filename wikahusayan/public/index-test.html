@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wikahusayan - Login Portal (Test Version)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Professional Game-Style Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                /* Enhanced base gradient layers with higher opacity */
+                linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%),
+                linear-gradient(45deg, rgba(240, 147, 251, 0.8) 0%, rgba(245, 87, 108, 0.8) 100%),
+                linear-gradient(-45deg, rgba(79, 172, 254, 0.85) 0%, rgba(0, 242, 254, 0.85) 100%),
+
+                /* Prominent geometric block patterns */
+                linear-gradient(90deg, rgba(255, 255, 255, 0.25) 2px, transparent 2px),
+                linear-gradient(rgba(255, 255, 255, 0.25) 2px, transparent 2px),
+
+                /* Enhanced particle effect overlays with glow */
+                radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.6) 2px, transparent 4px),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.6) 2px, transparent 4px),
+                radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.6) 2px, transparent 4px),
+                radial-gradient(circle at 60% 90%, rgba(255, 255, 255, 0.6) 2px, transparent 4px),
+                radial-gradient(circle at 90% 60%, rgba(255, 255, 255, 0.6) 2px, transparent 4px),
+
+                /* Dramatic geometric shape overlays */
+                conic-gradient(from 0deg at 50% 50%, rgba(255, 255, 255, 0.4) 0deg, transparent 90deg, rgba(255, 255, 255, 0.4) 180deg, transparent 270deg),
+
+                /* Additional prominent block patterns */
+                linear-gradient(45deg, rgba(255, 255, 255, 0.2) 2px, transparent 2px),
+                linear-gradient(-45deg, rgba(255, 255, 255, 0.2) 2px, transparent 2px),
+
+                /* Game-like energy streams */
+                linear-gradient(135deg, rgba(255, 255, 255, 0.15) 1px, transparent 1px),
+                linear-gradient(225deg, rgba(255, 255, 255, 0.15) 1px, transparent 1px),
+
+                /* Advanced floating orbs for game-like effect */
+                radial-gradient(circle at 15% 85%, rgba(0, 255, 255, 0.8) 3px, transparent 6px),
+                radial-gradient(circle at 85% 15%, rgba(255, 0, 255, 0.8) 3px, transparent 6px),
+                radial-gradient(circle at 35% 65%, rgba(255, 255, 0, 0.8) 3px, transparent 6px),
+                radial-gradient(circle at 65% 35%, rgba(0, 255, 0, 0.8) 3px, transparent 6px),
+                radial-gradient(circle at 50% 20%, rgba(255, 0, 128, 0.8) 3px, transparent 6px),
+                radial-gradient(circle at 20% 50%, rgba(128, 0, 255, 0.8) 3px, transparent 6px),
+                radial-gradient(circle at 80% 80%, rgba(0, 128, 255, 0.8) 3px, transparent 6px),
+
+                /* Energy stream particles */
+                radial-gradient(circle at 10% 30%, rgba(255, 255, 255, 0.9) 1px, transparent 3px),
+                radial-gradient(circle at 90% 70%, rgba(255, 255, 255, 0.9) 1px, transparent 3px),
+                radial-gradient(circle at 30% 10%, rgba(255, 255, 255, 0.9) 1px, transparent 3px),
+                radial-gradient(circle at 70% 90%, rgba(255, 255, 255, 0.9) 1px, transparent 3px),
+
+                /* Holographic data streams */
+                linear-gradient(45deg, rgba(0, 255, 255, 0.3) 1px, transparent 2px),
+                linear-gradient(-45deg, rgba(255, 0, 255, 0.3) 1px, transparent 2px),
+                linear-gradient(90deg, rgba(255, 255, 0, 0.3) 1px, transparent 2px),
+                linear-gradient(0deg, rgba(0, 255, 0, 0.3) 1px, transparent 2px);
+            background-size:
+                100% 100%,
+                100% 100%,
+                100% 100%,
+                40px 40px,
+                40px 40px,
+                4px 4px,
+                4px 4px,
+                4px 4px,
+                4px 4px,
+                4px 4px,
+                150px 150px,
+                25px 25px,
+                25px 25px,
+                60px 60px,
+                60px 60px,
+                8px 8px,
+                8px 8px,
+                8px 8px,
+                8px 8px,
+                8px 8px,
+                8px 8px,
+                8px 8px,
+                2px 2px,
+                2px 2px,
+                2px 2px,
+                2px 2px,
+                30px 30px,
+                30px 30px,
+                30px 30px,
+                30px 30px;
+            animation:
+                backgroundShift 6s ease-in-out infinite,
+                particleFloat 4s ease-in-out infinite,
+                geometricRotate 8s linear infinite,
+                orbDrift 10s ease-in-out infinite,
+                energyPulse 3s ease-in-out infinite alternate,
+                floatingOrbs 12s ease-in-out infinite,
+                energyStreams 5s linear infinite,
+                holographicShift 15s ease-in-out infinite;
+            z-index: -1;
+            filter: brightness(1.3) contrast(1.4) saturate(1.2);
+        }
+
+        /* Advanced Holographic Data Layer */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                /* Quantum field particles */
+                radial-gradient(circle at 20% 80%, rgba(0, 255, 255, 0.4) 1px, transparent 2px),
+                radial-gradient(circle at 80% 20%, rgba(255, 0, 255, 0.4) 1px, transparent 2px),
+                radial-gradient(circle at 40% 40%, rgba(255, 255, 0, 0.4) 1px, transparent 2px),
+                radial-gradient(circle at 60% 90%, rgba(0, 255, 0, 0.4) 1px, transparent 2px),
+                radial-gradient(circle at 90% 60%, rgba(255, 0, 128, 0.4) 1px, transparent 2px),
+
+                /* Energy wave patterns */
+                conic-gradient(from 0deg at 50% 50%, rgba(0, 255, 255, 0.1) 0deg, transparent 90deg, rgba(255, 0, 255, 0.1) 180deg, transparent 270deg),
+
+                /* Cyberpunk grid overlay */
+                linear-gradient(rgba(0, 255, 0, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 0, 0.1) 1px, transparent 1px),
+
+                /* Glitch effect lines */
+                linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%);
+            background-size:
+                3px 3px,
+                3px 3px,
+                3px 3px,
+                3px 3px,
+                3px 3px,
+                200px 200px,
+                20px 20px,
+                20px 20px,
+                100% 2px;
+            animation:
+                quantumField 2s ease-in-out infinite,
+                energyWave 6s linear infinite,
+                gridPulse 4s ease-in-out infinite alternate,
+                glitchEffect 10s step-end infinite;
+            z-index: -1;
+            mix-blend-mode: screen;
+        }
+
+        .landing-container {
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .landing-title {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .landing-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+
+        .role-selection {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .role-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            color: #333;
+            width: 300px;
+            padding: 40px 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .role-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .role-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .role-title {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .role-description {
+            font-size: 1rem;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-small:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Login Forms */
+        .login-form {
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            color: #333;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-form.active {
+            display: block;
+        }
+
+        .form-title {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        /* Input Groups */
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Poppins', sans-serif;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .success { background: rgba(67, 233, 123, 0.2); color: #43e97b; }
+        .error { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
+        .info { background: rgba(79, 172, 254, 0.2); color: #4facfe; }
+    </style>
+</head>
+<body>
+    <div class="landing-container">
+        <!-- Main Landing Page -->
+        <div id="landing-page">
+            <h1 class="landing-title">Wikahusayan</h1>
+            <p class="landing-subtitle">Ang Iyong Digital na Kaakbay sa Pag-aaral ng Wikang Filipino</p>
+
+            <div class="role-selection">
+                <div class="role-card">
+                    <span class="role-icon">🎓</span>
+                    <h3 class="role-title">Estudyante</h3>
+                    <p class="role-description">Sumabak sa mga aralin at laro upang pagyamanin ang iyong kaalaman sa wikang Filipino.</p>
+                    <div class="action-buttons">
+                        <button class="btn-small btn-primary" onclick="showRegisterForm('student')">Mag-register</button>
+                        <button class="btn-small btn-secondary" onclick="showLoginForm('student')">Mag-login</button>
+                    </div>
+                </div>
+
+                <div class="role-card">
+                    <span class="role-icon">👩‍🏫</span>
+                    <h3 class="role-title">Guro</h3>
+                    <p class="role-description">Pamahalaan ang mga aralin, subaybayan ang progreso ng mga estudyante.</p>
+                    <div class="action-buttons">
+                        <button class="btn-small btn-primary" onclick="showRegisterForm('teacher')">Mag-register</button>
+                        <button class="btn-small btn-secondary" onclick="showLoginForm('teacher')">Mag-login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Login Form -->
+        <div id="student-login" class="login-form">
+            <h2 class="form-title">🎓 Login bilang Estudyante</h2>
+            <form onsubmit="loginStudent(event)">
+                <div class="input-group">
+                    <label for="student-name" class="input-label">Buong Pangalan</label>
+                    <input type="text" id="student-name" class="input-field" placeholder="Ilagay ang iyong buong pangalan" required>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Mag-Login</button>
+                    <button type="button" class="btn btn-secondary" onclick="backToLanding()">Bumalik</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Teacher Login Form -->
+        <div id="teacher-login" class="login-form">
+            <h2 class="form-title">👩‍🏫 Login bilang Guro</h2>
+            <form onsubmit="loginTeacher(event)">
+                <div class="input-group">
+                    <label for="teacher-name" class="input-label">Email Address</label>
+                    <input type="email" id="teacher-name" class="input-field" placeholder="Ilagay ang iyong email" required>
+                </div>
+                <div class="input-group">
+                    <label for="teacher-password" class="input-label">Password</label>
+                    <input type="password" id="teacher-password" class="input-field" placeholder="Ilagay ang password" required>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Mag-Login</button>
+                    <button type="button" class="btn btn-secondary" onclick="backToLanding()">Bumalik</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Student Register Form -->
+        <div id="student-register" class="login-form">
+            <h2 class="form-title">🎓 Mag-register bilang Estudyante</h2>
+            <form onsubmit="registerStudent(event)">
+                <div class="input-group">
+                    <label for="student-reg-name" class="input-label">Buong Pangalan</label>
+                    <input type="text" id="student-reg-name" class="input-field" placeholder="Ilagay ang iyong buong pangalan" required>
+                </div>
+                <div class="input-group">
+                    <label for="student-reg-grade" class="input-label">Grade Level</label>
+                    <select id="student-reg-grade" class="input-field" required>
+                        <option value="">Pumili ng Grade Level</option>
+                        <option value="Grade 7">Grade 7</option>
+                        <option value="Grade 8">Grade 8</option>
+                        <option value="Grade 9">Grade 9</option>
+                        <option value="Grade 10">Grade 10</option>
+                    </select>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Mag-register</button>
+                    <button type="button" class="btn btn-secondary" onclick="backToLanding()">Bumalik</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Teacher Register Form -->
+        <div id="teacher-register" class="login-form">
+            <h2 class="form-title">👩‍🏫 Mag-register bilang Guro</h2>
+            <form onsubmit="registerTeacher(event)">
+                <div class="input-group">
+                    <label for="teacher-reg-name" class="input-label">Buong Pangalan</label>
+                    <input type="text" id="teacher-reg-name" class="input-field" placeholder="Ilagay ang iyong buong pangalan" required>
+                </div>
+                <div class="input-group">
+                    <label for="teacher-reg-email" class="input-label">Email Address</label>
+                    <input type="email" id="teacher-reg-email" class="input-field" placeholder="Ilagay ang iyong email" required>
+                </div>
+                <div class="input-group">
+                    <label for="teacher-reg-school" class="input-label">Paaralan</label>
+                    <input type="text" id="teacher-reg-school" class="input-field" placeholder="Ilagay ang iyong paaralan" required>
+                </div>
+                <div class="input-group">
+                    <label for="teacher-reg-password" class="input-label">Password</label>
+                    <input type="password" id="teacher-reg-password" class="input-field" placeholder="Ilagay ang password" required>
+                </div>
+                <div class="input-group">
+                    <label for="teacher-reg-confirm" class="input-label">Confirm Password</label>
+                    <input type="password" id="teacher-reg-confirm" class="input-field" placeholder="Ilagay muli ang password" required>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Mag-register</button>
+                    <button type="button" class="btn btn-secondary" onclick="backToLanding()">Bumalik</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="status"></div>
+    </div>
+
+    <script>
+        // Status display function
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+            setTimeout(() => statusDiv.innerHTML = '', 5000);
+        }
+
+        // Navigation functions
+        function showLoginForm(role) {
+            document.getElementById('landing-page').style.display = 'none';
+            document.getElementById(`${role}-login`).classList.add('active');
+            showStatus(`Showing ${role} login form`, 'info');
+        }
+
+        function showRegisterForm(role) {
+            document.getElementById('landing-page').style.display = 'none';
+            document.getElementById(`${role}-register`).classList.add('active');
+            showStatus(`Showing ${role} registration form`, 'info');
+        }
+
+        function backToLanding() {
+            document.querySelectorAll('.login-form').forEach(form => {
+                form.classList.remove('active');
+            });
+            document.getElementById('landing-page').style.display = 'block';
+            showStatus('Back to main page', 'info');
+        }
+
+        // Student functions (simplified for testing)
+        function registerStudent(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('student-reg-name').value.trim();
+            const grade = document.getElementById('student-reg-grade').value;
+
+            if (!name || !grade) {
+                showStatus('Pakiusapan, punan ang lahat ng field.', 'error');
+                return;
+            }
+
+            // Simulate successful registration
+            showStatus(`✅ Student "${name}" registered successfully for ${grade}!`, 'success');
+
+            // Clear form and show login
+            event.target.reset();
+            setTimeout(() => {
+                backToLanding();
+                setTimeout(() => showLoginForm('student'), 500);
+            }, 2000);
+        }
+
+        function loginStudent(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('student-name').value.trim();
+
+            if (!name) {
+                showStatus('Pakiusapan, ilagay ang iyong pangalan.', 'error');
+                return;
+            }
+
+            // Simulate successful login
+            showStatus(`✅ Welcome back, ${name}! Redirecting to student dashboard...`, 'success');
+
+            // Simulate redirect after 2 seconds
+            setTimeout(() => {
+                showStatus('🎓 This would redirect to student/index.html in the real version', 'info');
+            }, 2000);
+        }
+
+        // Teacher functions (simplified for testing)
+        function registerTeacher(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('teacher-reg-name').value.trim();
+            const email = document.getElementById('teacher-reg-email').value.trim();
+            const school = document.getElementById('teacher-reg-school').value.trim();
+            const password = document.getElementById('teacher-reg-password').value;
+            const confirmPassword = document.getElementById('teacher-reg-confirm').value;
+
+            if (!name || !email || !school || !password) {
+                showStatus('Pakiusapan, punan ang lahat ng field.', 'error');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showStatus('Hindi magkatugma ang password.', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showStatus('Ang password ay dapat hindi bababa sa 6 na character.', 'error');
+                return;
+            }
+
+            // Simulate successful registration
+            showStatus(`✅ Teacher "${name}" from ${school} registered successfully!`, 'success');
+
+            // Clear form and show login
+            event.target.reset();
+            setTimeout(() => {
+                backToLanding();
+                setTimeout(() => showLoginForm('teacher'), 500);
+            }, 2000);
+        }
+
+        function loginTeacher(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('teacher-name').value.trim();
+            const password = document.getElementById('teacher-password').value;
+
+            if (!email || !password) {
+                showStatus('Pakiusapan, punan ang lahat ng field.', 'error');
+                return;
+            }
+
+            // Simulate successful login
+            showStatus(`✅ Welcome back, Teacher! Redirecting to teacher dashboard...`, 'success');
+
+            // Simulate redirect after 2 seconds
+            setTimeout(() => {
+                showStatus('👩‍🏫 This would redirect to teacher/index.html in the real version', 'info');
+            }, 2000);
+        }
+
+        // Initialize
+        window.onload = function() {
+            showStatus('🎉 Wikahusayan Test Version Loaded! Click any button to test.', 'success');
+        };
+    </script>
+</body>
+</html>

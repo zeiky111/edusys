@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<title>I-edit ang Drag & Drop Puzzle - Wikahusayan Quest</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/teacher.css">
+<script type="module">
+// Firebase imports
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+import { getFirestore, collection, getDocs, doc, setDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyD9khDPPquuztCUWLfzithwPmQFpI8t49g",
+  authDomain: "wikahusayan-quest.firebaseapp.com",
+  projectId: "wikahusayan-quest",
+  storageBucket: "wikahusayan-quest.firebasestorage.app",
+  messagingSenderId: "744849133114",
+  appId: "1:744849133114:web:31c5f34bc1ace7e3a5ef03"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+console.log('🔧 Firebase initialized');
+console.log('🔧 Auth object:', auth);
+console.log('🔧 DB object:', db);
+
+// Game state
+let currentUser = null;
+let isAuthenticated = false;
+let currentLevelIndex = 0;
+let puzzleData = {
+  levels: [
+    {
+      title: "Level 1",
+      items: [
+        { text: "Piliin ang paksa", points: 10 },
+        { text: "Magdagdag ng predikado", points: 10 },
+        { text: "Ayusin ang salita", points: 10 },
+        { text: "Lagyan ng bantas", points: 10 }
+      ],
+      correctOrder: [
+        "Piliin ang paksa",
+        "Magdagdag ng predikado",
+        "Ayusin ang salita",
+        "Lagyan ng bantas"
+      ]
+    }
+  ]
+};
+
+// Firebase authentication
+onAuthStateChanged(auth, (user) => {
+  console.log('🔥 onAuthStateChanged fired:', user ? 'logged in' : 'logged out');
+  console.log('🔥 User details:', user);
+  
+  if (!user) {
+    // Not authenticated, redirect to login
+    console.log('Not authenticated, redirecting to login');
+    window.location.href = '../../public/index.html';
+    return;
+  }
+  
+  currentUser = user;
+  isAuthenticated = true;
+
+  // Wait for DOM to be ready before manipulating elements
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      updateAuthStatusDisplay();
+      showContent();
+      loadPuzzle();
+    });
+  } else {
+    updateAuthStatusDisplay();
+    showContent();
+    loadPuzzle();
+  }
+});
+
+// Also check current auth state immediately
+console.log('🔍 Checking current auth state...');
+const currentAuthUser = auth.currentUser;
+console.log('🔍 Current auth user:', currentAuthUser);
+
+if (currentAuthUser) {
+  console.log('🔍 User already authenticated');
+  currentUser = currentAuthUser;
+  isAuthenticated = true;
+
+  // Wait for DOM to be ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      updateAuthStatusDisplay();
+      showContent();
+      loadPuzzle();
+    });
+  } else {
+    updateAuthStatusDisplay();
+    showContent();
+    loadPuzzle();
+  }
+} else {
+  console.log('🔍 No current user');
+
+  // Wait for DOM to be ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      updateAuthStatusDisplay();
+      showContent();
+      loadPuzzle();
+    });
+  } else {
+    updateAuthStatusDisplay();
+    showContent();
+    loadPuzzle();
+  }
+}
+
+// Fallback: Show content after 2 seconds if not shown yet
+setTimeout(() => {
+  const loadingMessage = document.getElementById('loading-message');
+  const puzzleSetup = document.getElementById('puzzle-setup');
+  const actionButtons = document.getElementById('action-buttons');
+
+  if (loadingMessage && loadingMessage.style.display !== 'none') {
+    console.log('⏰ Fallback: Showing content after timeout');
+    showContent();
+    loadPuzzle();
+  }
+}, 2000);
+
+// Helper functions
+function updateAuthStatusDisplay() {
+  const authStatus = document.getElementById('auth-status');
+  if (authStatus) {
+    if (currentUser && isAuthenticated) {
+      authStatus.innerHTML = `✅ Logged in as: ${currentUser.email}`;
+      authStatus.style.color = '#4CAF50';
+    } else {
+      authStatus.innerHTML = '❌ Not logged in (saving to localStorage)';
+      authStatus.style.color = '#f44336';
+    }
+  }
+}
+
+function showContent() {
+  console.log('🎨 Showing content...');
+  const loadingMessage = document.getElementById('loading-message');
+  const puzzleSetup = document.getElementById('puzzle-setup');
+  const actionButtons = document.getElementById('action-buttons');
+  const levelNavigation = document.getElementById('level-navigation');
+
+  if (loadingMessage) {
+    loadingMessage.style.display = 'none';
+    console.log('✅ Loading message hidden');
+  }
+  if (puzzleSetup) {
+    puzzleSetup.style.display = 'block';
+    console.log('✅ Puzzle setup shown');
+  }
+  if (actionButtons) {
+    actionButtons.style.display = 'block';
+    console.log('✅ Action buttons shown');
+  }
+  if (levelNavigation) {
+    levelNavigation.style.display = 'block';
+    console.log('✅ Level navigation shown');
+  }
+}
+
+async function loadPuzzle() {
+  console.log('🔄 loadPuzzle called');
+
+  try {
+    console.log('📡 Loading puzzle...');
+    showStatus('Loading puzzle...', 'info');
+
+    if (isAuthenticated && currentUser) {
+      console.log('📡 Loading from Firebase...');
+      const questionsRef = collection(db, 'game_content');
+
+      // Get all documents and filter for matching game type
+      const allDocs = await getDocs(questionsRef);
+      const matchingDocs = [];
+      allDocs.forEach(doc => {
+        const data = doc.data();
+        if (data.gameType === 'matching') {
+          matchingDocs.push({ id: doc.id, data: data });
+        }
+      });
+
+      if (matchingDocs.length > 0) {
+        // Sort by updatedAt and get the most recent
+        const sortedDocs = matchingDocs.sort((a, b) => {
+          const aTime = a.data.updatedAt?.toDate?.() || new Date(a.data.updatedAt || 0);
+          const bTime = b.data.updatedAt?.toDate?.() || new Date(b.data.updatedAt || 0);
+          return bTime - aTime;
+        });
+
+        const latestDoc = sortedDocs[0];
+        let loadedData = latestDoc.data.content?.puzzleData;
+        
+        // Backward compatibility: convert old single-level format to new multi-level format
+        if (loadedData && !loadedData.levels) {
+          loadedData = {
+            levels: [{
+              title: "Level 1",
+              items: loadedData.items || [],
+              correctOrder: loadedData.correctOrder || []
+            }]
+          };
+        }
+        
+        // Normalize items to objects with points
+        if (loadedData && loadedData.levels) {
+          loadedData.levels.forEach(level => {
+            if (level.items && Array.isArray(level.items)) {
+              level.items = level.items.map(item => {
+                if (typeof item === 'string') {
+                  return { text: item, points: 10 };
+                }
+                return item;
+              });
+            }
+          });
+        }
+        
+        puzzleData = loadedData || puzzleData;
+        console.log('Loaded latest matching game from:', latestDoc.id);
+        showStatus('Loaded puzzle from Firebase!', 'success');
+      } else {
+        // Try localStorage fallback
+        const localData = localStorage.getItem('matching_puzzle');
+        if (localData) {
+          let parsedData = JSON.parse(localData);
+          // Backward compatibility: convert old single-level format to new multi-level format
+          if (parsedData && !parsedData.levels) {
+            parsedData = {
+              levels: [{
+                title: "Level 1",
+                items: parsedData.items || [],
+                correctOrder: parsedData.correctOrder || []
+              }]
+            };
+          }
+          // Normalize items to objects with points
+          if (parsedData && parsedData.levels) {
+            parsedData.levels.forEach(level => {
+              if (level.items && Array.isArray(level.items)) {
+                level.items = level.items.map(item => {
+                  if (typeof item === 'string') {
+                    return { text: item, points: 10 };
+                  }
+                  return item;
+                });
+              }
+            });
+          }
+          puzzleData = parsedData;
+          showStatus('Loaded puzzle from local storage', 'success');
+        } else {
+          showStatus('Using default puzzle', 'info');
+        }
+      }
+    } else {
+      console.log('📱 Loading from localStorage (offline mode)...');
+      // Not authenticated, try localStorage
+      const localData = localStorage.getItem('matching_puzzle');
+      if (localData) {
+        let parsedData = JSON.parse(localData);
+        // Backward compatibility: convert old single-level format to new multi-level format
+        if (parsedData && !parsedData.levels) {
+          parsedData = {
+            levels: [{
+              title: "Level 1",
+              items: parsedData.items || [],
+              correctOrder: parsedData.correctOrder || []
+            }]
+          };
+        }
+        // Normalize items to objects with points
+        if (parsedData && parsedData.levels) {
+          parsedData.levels.forEach(level => {
+            if (level.items && Array.isArray(level.items)) {
+              level.items = level.items.map(item => {
+                if (typeof item === 'string') {
+                  return { text: item, points: 10 };
+                }
+                return item;
+              });
+            }
+          });
+        }
+        puzzleData = parsedData;
+        showStatus('Loaded puzzle from local storage (offline mode)', 'success');
+      } else {
+        showStatus('Using default puzzle (offline mode)', 'info');
+      }
+    }
+
+    renderPuzzle();
+    hideStatus();
+
+    console.log('✅ Puzzle loaded successfully');
+
+  } catch (error) {
+    console.error('Error loading puzzle:', error);
+    showStatus('Error loading puzzle, using defaults', 'error');
+    
+    // Fallback to localStorage
+    const localData = localStorage.getItem('matching_puzzle');
+    if (localData) {
+      try {
+        puzzleData = JSON.parse(localData);
+        showStatus('Loaded puzzle from local storage', 'success');
+      } catch (parseError) {
+        console.error('Error parsing local storage data:', parseError);
+      }
+    }
+    
+    renderPuzzle();
+  }
+}
+
+function updateLevelUI() {
+  const levelIndicator = document.getElementById('level-indicator');
+  const levelTitle = document.getElementById('level-title');
+  const prevBtn = document.querySelector('button[onclick="previousLevel()"]');
+  const nextBtn = document.querySelector('button[onclick="nextLevel()"]');
+  
+  if (levelIndicator) {
+    levelIndicator.textContent = `Level ${currentLevelIndex + 1} of ${puzzleData.levels.length}`;
+  }
+  
+  if (levelTitle && puzzleData.levels[currentLevelIndex]) {
+    levelTitle.value = puzzleData.levels[currentLevelIndex].title || `Level ${currentLevelIndex + 1}`;
+  }
+  
+  // Enable/disable navigation buttons
+  if (prevBtn) {
+    prevBtn.disabled = currentLevelIndex === 0;
+    prevBtn.style.opacity = currentLevelIndex === 0 ? '0.5' : '1';
+  }
+  if (nextBtn) {
+    nextBtn.disabled = currentLevelIndex === puzzleData.levels.length - 1;
+    nextBtn.style.opacity = currentLevelIndex === puzzleData.levels.length - 1 ? '0.5' : '1';
+  }
+}
+
+function previousLevel() {
+  if (currentLevelIndex > 0) {
+    currentLevelIndex--;
+    renderPuzzle();
+  }
+}
+
+function nextLevel() {
+  if (currentLevelIndex < puzzleData.levels.length - 1) {
+    currentLevelIndex++;
+    renderPuzzle();
+  }
+}
+
+function addLevel() {
+  const newLevel = {
+    title: `Level ${puzzleData.levels.length + 1}`,
+    items: [
+      "Piliin ang paksa",
+      "Magdagdag ng predikado",
+      "Ayusin ang salita",
+      "Lagyan ng bantas"
+    ],
+    correctOrder: [
+      "Piliin ang paksa",
+      "Magdagdag ng predikado",
+      "Ayusin ang salita",
+      "Lagyan ng bantas"
+    ]
+  };
+  
+  puzzleData.levels.push(newLevel);
+  currentLevelIndex = puzzleData.levels.length - 1;
+  renderPuzzle();
+}
+
+function deleteLevel() {
+  if (puzzleData.levels.length <= 1) {
+    alert('Cannot delete the last level!');
+    return;
+  }
+  
+  if (confirm('Sigurado ka bang tanggalin ang level na ito?')) {
+    puzzleData.levels.splice(currentLevelIndex, 1);
+    if (currentLevelIndex >= puzzleData.levels.length) {
+      currentLevelIndex = puzzleData.levels.length - 1;
+    }
+    renderPuzzle();
+  }
+}
+
+function updateLevelTitle(title) {
+  if (puzzleData.levels[currentLevelIndex]) {
+    puzzleData.levels[currentLevelIndex].title = title;
+  }
+}
+
+function renderPuzzle() {
+  console.log('🎨 renderPuzzle called');
+  console.log('🎨 currentLevelIndex:', currentLevelIndex);
+  console.log('🎨 puzzleData:', puzzleData);
+
+  const puzzleSetup = document.getElementById('puzzle-setup');
+  if (!puzzleSetup) {
+    console.error('❌ puzzleSetup element not found!');
+    return;
+  }
+
+  puzzleSetup.innerHTML = '';
+
+  const currentLevel = puzzleData.levels[currentLevelIndex];
+  if (!currentLevel) {
+    puzzleSetup.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">No level data found!</p>';
+    console.log('🎨 No level data found');
+    return;
+  }
+
+  if (!currentLevel.items || currentLevel.items.length === 0) {
+    puzzleSetup.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">No puzzle items found. Add some items!</p>';
+    console.log('🎨 No items to render');
+    return;
+  }
+
+  currentLevel.items.forEach((item, index) => {
+    console.log('🎨 Rendering item', index, ':', item);
+    const puzzleItem = document.createElement('div');
+    puzzleItem.className = 'puzzle-item';
+    puzzleItem.innerHTML = `
+      <h3>Item ${index + 1}</h3>
+      <input type="text" class="item-input" value="${item.text || item}" onchange="updateItemText(${index}, this.value)">
+      <input type="number" class="points-input" value="${item.points || 10}" min="1" max="100" onchange="updateItemPoints(${index}, this.value)">
+      <button class="delete-btn" onclick="deleteItem(${index})">Tanggalin</button>
+    `;
+    puzzleSetup.appendChild(puzzleItem);
+  });
+
+  // Update level indicator and title
+  updateLevelUI();
+
+  console.log('🎨 renderPuzzle completed');
+}
+
+function addItem() {
+  const currentLevel = puzzleData.levels[currentLevelIndex];
+  if (currentLevel) {
+    currentLevel.items.push({ text: "Bagong item", points: 10 });
+    currentLevel.correctOrder.push("Bagong item");
+    renderPuzzle();
+  }
+}
+
+function updateItemText(index, value) {
+  const currentLevel = puzzleData.levels[currentLevelIndex];
+  if (currentLevel && currentLevel.items[index] !== undefined) {
+    currentLevel.items[index].text = value;
+    currentLevel.correctOrder[index] = value;
+  }
+}
+
+function updateItemPoints(index, value) {
+  const currentLevel = puzzleData.levels[currentLevelIndex];
+  if (currentLevel && currentLevel.items[index] !== undefined) {
+    currentLevel.items[index].points = parseInt(value) || 10;
+  }
+}
+
+function deleteItem(index) {
+  const currentLevel = puzzleData.levels[currentLevelIndex];
+  if (currentLevel && confirm('Sigurado ka bang tanggalin ang item na ito?')) {
+    currentLevel.items.splice(index, 1);
+    currentLevel.correctOrder.splice(index, 1);
+    renderPuzzle();
+  }
+}
+
+async function savePuzzle() {
+  const saveBtn = document.querySelector('.save-btn');
+  const originalText = saveBtn.innerHTML;
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = 'Saving...';
+
+  console.log('💾 savePuzzle called');
+  console.log('💾 isAuthenticated:', isAuthenticated);
+  console.log('💾 currentUser:', currentUser);
+  console.log('💾 puzzleData:', puzzleData);
+
+  try {
+    showStatus('Saving puzzle...', 'info');
+
+    if (isAuthenticated && currentUser) {
+      console.log('💾 Saving to Firebase...');
+      const contentData = {
+        gameType: 'matching',
+        teacherId: currentUser.uid,
+        content: { puzzleData: puzzleData },
+        updatedAt: new Date(),
+        createdAt: new Date()
+      };
+
+      console.log('💾 Saving contentData:', contentData);
+
+      const docId = `matching_${currentUser.uid}`;
+      const docRef = doc(db, 'game_content', docId);
+
+      await setDoc(docRef, contentData);
+      console.log('✅ Successfully saved to Firebase');
+      showStatus('Puzzle saved successfully!', 'success');
+    } else {
+      console.log('💾 Saving to localStorage (not authenticated)');
+      // Save to localStorage as fallback
+      localStorage.setItem('matching_puzzle', JSON.stringify(puzzleData));
+      showStatus('Puzzle saved to local storage (offline mode)', 'success');
+    }
+    
+    saveBtn.innerHTML = originalText;
+    saveBtn.disabled = false;
+  } catch (error) {
+    console.error('❌ Error saving puzzle:', error);
+    // Fallback to localStorage
+    localStorage.setItem('matching_puzzle', JSON.stringify(puzzleData));
+    showStatus('Puzzle saved to local storage due to error', 'warning');
+    saveBtn.innerHTML = originalText;
+    saveBtn.disabled = false;
+  }
+}
+
+// Status message functions
+function showStatus(message, type) {
+  hideStatus();
+  const statusDiv = document.createElement('div');
+  statusDiv.className = `status-message status-${type}`;
+  statusDiv.textContent = message;
+  document.body.appendChild(statusDiv);
+
+  setTimeout(() => {
+    hideStatus();
+  }, 3000);
+}
+
+function hideStatus() {
+  const existing = document.querySelector('.status-message');
+  if (existing) {
+    existing.remove();
+  }
+}
+
+// Make functions globally available
+window.addItem = addItem;
+window.updateItemText = updateItemText;
+window.updateItemPoints = updateItemPoints;
+window.deleteItem = deleteItem;
+window.savePuzzle = savePuzzle;
+window.previousLevel = previousLevel;
+window.nextLevel = nextLevel;
+window.addLevel = addLevel;
+window.deleteLevel = deleteLevel;
+window.updateLevelTitle = updateLevelTitle;
+</script>
+<style>
+.edit-puzzle-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+.puzzle-setup {
+  margin-top: 30px;
+}
+.puzzle-item {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.puzzle-item h3 {
+  margin-bottom: 10px;
+  color: #333;
+}
+.item-input {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+.points-input {
+  width: 80px;
+  padding: 8px;
+  margin: 5px 10px 5px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+.add-item-btn, .save-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 10px 5px;
+}
+.add-item-btn:hover, .save-btn:hover {
+  background: #45a049;
+}
+.delete-btn {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.delete-btn:hover {
+  background: #d32f2f;
+}
+.back-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: #2196F3;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+.back-btn:hover {
+  background: #0b7dda;
+}
+.status-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.status-success {
+  background: #4CAF50;
+}
+.status-error {
+  background: #f44336;
+}
+.status-info {
+  background: #2196F3;
+}
+.status-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.status-success {
+  background: #4CAF50;
+}
+.status-error {
+  background: #f44336;
+}
+.status-info {
+  background: #2196F3;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
+</head>
+<body>
+<a href="edit-games.html" class="back-btn">← Bumalik sa Pili ng Laro</a>
+
+<div class="edit-puzzle-container">
+  <h1 style="text-align: center; color: #333; margin-bottom: 10px;">I-edit ang Drag & Drop Puzzle 🧩</h1>
+  <p style="text-align: center; color: #666; font-size: 18px;">Mag-edit ng mga item para sa Collaborative Matching Game.</p>
+
+  <!-- Level Navigation -->
+  <div class="level-navigation" id="level-navigation" style="display: none; text-align: center; margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 10px;">
+    <div style="margin-bottom: 15px;">
+      <button onclick="previousLevel()" style="background: #666; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin-right: 10px;">← Previous</button>
+      <span id="level-indicator" style="font-weight: bold; font-size: 16px;">Level 1 of 1</span>
+      <button onclick="nextLevel()" style="background: #666; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin-left: 10px;">Next →</button>
+    </div>
+    <div>
+      <input type="text" id="level-title" placeholder="Level title" style="padding: 8px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px;" onchange="updateLevelTitle(this.value)">
+      <button onclick="addLevel()" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin-right: 10px;">+ Add Level</button>
+      <button onclick="deleteLevel()" style="background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">Delete Level</button>
+    </div>
+  </div>
+
+  <div id="loading-message" style="text-align: center; padding: 50px; color: #666;">
+    <div style="width: 40px; height: 40px; border: 4px solid rgba(102, 126, 234, 0.3); border-radius: 50%; border-top-color: #667eea; animation: spin 1s ease-in-out infinite; margin: 0 auto 20px;"></div>
+    <p>Sinusuri ang authentication...</p>
+  </div>
+
+  <div class="puzzle-setup" id="puzzle-setup" style="display: none;">
+    <p style="text-align: center; color: #666; padding: 40px;">Loading puzzle items...</p>
+  </div>
+
+  <div id="action-buttons" style="display: none;">
+    <button class="add-item-btn" onclick="addItem()">Magdagdag ng Item</button>
+    <button class="save-btn" onclick="savePuzzle()">I-save ang Mga Pagbabago</button>
+    <div id="auth-status" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
+  </div>
+</div>
+
+
+</body>
+</html>

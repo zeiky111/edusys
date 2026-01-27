@@ -1,0 +1,20 @@
+{
+  "name": "wikahusayan-quest",
+  "version": "1.0.0",
+  "description": "Wikahusayan - Digital Filipino Language Learning Platform",
+  "main": "index.js",
+  "scripts": {
+    "start": "http-server -p 8000",
+    "dev": "http-server -p 8000 -o",
+    "build": "echo 'No build step required for static site'"
+  },
+  "dependencies": {
+    "firebase": "^9.22.0"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "keywords": ["education", "filipino", "language-learning", "firebase"],
+  "author": "Wikahusayan Team",
+  "license": "MIT"
+}

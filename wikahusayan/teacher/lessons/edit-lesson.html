@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Lesson</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/teacher.css">
+</head>
+<body>
+
+<div class="view" style="display:block;">
+    <button class="back-btn" onclick="window.location.href='../index.html'">⬅ Bumalik</button>
+
+  <h1>Edit Lesson Content ✏️</h1>
+  <div class="welcome">
+    "Piliin ang topic at i-edit ang bawat slide ng aralin."
+  </div>
+
+  <!-- Topic Selection -->
+  <div class="topic-selection">
+    <h3>Pumili ng Topic:</h3>
+    <select id="topic-select" onchange="loadLessonSlides()">
+      <option value="">-- Pumili ng Topic --</option>
+      <!-- Topics will be loaded dynamically from database -->
+    </select>
+  </div>
+
+  <!-- Slides Editor -->
+  <div id="slides-editor" style="display: none;">
+    <h2 id="lesson-title">Lesson Title</h2>
+
+    <div id="slides-container">
+      <!-- Slides will be loaded here -->
+    </div>
+
+    <div class="editor-actions">
+      <button onclick="addNewSlide()" class="add-slide-btn">➕ Magdagdag ng Slide</button>
+      <button onclick="saveAllSlides()" class="save-all-btn">💾 I-save lahat ng Slide</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let currentLesson = '';
+let slidesData = [];
+
+// Default lesson content (fallback if no content in database)
+const defaultLessons = {
+  bahagi: [
+    { title: "Introduction", content: "Ang bahagi ng pananalita ay tumutukoy sa iba't ibang uri ng salita sa pangungusap." },
+    { title: "Pangngalan", content: "<strong>Pangngalan</strong> – pangalan ng tao, hayop, bagay, lugar, o ideya (hal. \"Aso\", \"Bahay\")" },
+    { title: "Pang-uri", content: "<strong>Pang-uri</strong> – naglalarawan sa pangngalan o panghalip (hal. \"Mabilis\", \"Maganda\")" },
+    { title: "Pandiwa", content: "<strong>Pandiwa</strong> – nagsasaad ng kilos o galaw (hal. \"Tumakbo\", \"Kumain\")" },
+    { title: "Pang-abay", content: "<strong>Pang-abay</strong> – naglalarawan sa pandiwa, pang-uri, o kapwa pang-abay (hal. \"Mabilis\", \"Dito\")" },
+    { title: "Panghalip", content: "<strong>Panghalip</strong> – pamalit sa pangngalan (hal. \"Siya\", \"Ito\")" },
+    { title: "Pang-ukol", content: "<strong>Pang-ukol</strong> – nag-uugnay ng pangngalan o panghalip sa ibang salita (hal. \"sa\", \"ng\")" },
+    { title: "Conclusion", content: "Sa araling ito, matututuhan ang pagkilala at tamang paggamit ng bawat bahagi ng pananalita sa pangungusap." }
+  ],
+  bantas: [
+    { title: "Introduction", content: "Ang wastong paggamit ng bantas ay mahalagang bahagi ng tamang pagsulat." },
+    { title: "Tuldok (.)", content: "<strong>Tuldok</strong> – ginagamit sa dulo ng pangungusap (hal. \"Kumain siya.\")" },
+    { title: "Kuwit (,)", content: "<strong>Kuwit</strong> – ginagamit upang paghiwalayin ang mga salita o parirala (hal. \"Siya, ako, at ikaw ay magkakaibigan.\")" },
+    { title: "Tandang Pananong (?)", content: "<strong>Tandang Pananong</strong> – ginagamit sa dulo ng tanong (hal. \"Ano ang iyong pangalan?\")" },
+    { title: "Tandang Padamdam (!)", content: "<strong>Tandang Padamdam</strong> – ginagamit upang ipahayag ang matinding damdamin (hal. \"Masaya ako!\")" },
+    { title: "Conclusion", content: "Ang tamang paggamit ng bantas ay nakakatulong sa malinaw na komunikasyon." }
+  ],
+  pangungusap: [
+    { title: "Introduction", content: "Ang pangungusap ay binubuo ng tamang pagkakasunod-sunod ng mga salita upang maipahayag ang kumpletong diwa." },
+    { title: "Paksa o Subject", content: "Simulan sa paksa o subject (Sino o ano ang pinag-uusapan?)" },
+    { title: "Panaguri o Predicate", content: "Sundan ng panaguri o predicate (Ano ang ginagawa o nangyayari sa paksa?)" },
+    { title: "Tamang Bantas", content: "Gamitin ang tamang bantas sa dulo ng pangungusap" },
+    { title: "Halimbawa", content: "Halimbawa: <em>\"Si Maria ay nagluto ng masarap na hapunan.\"</em>" },
+    { title: "Conclusion", content: "Ang tamang pagbuo ng pangungusap ay mahalagang bahagi ng epektibong komunikasyon." }
+  ],
+  nangng: [
+    { title: "Introduction", content: "Tamang Gamit ng \"Nang/Ng, Kung/Kong, Punasan/Punasin\"" },
+    { title: "Ang salitang \"Nang\"", content: "Ang salitang <strong>\"nang\"</strong> ay ginagamit upang ipahiwatig ang oras, dahilan, o kondisyon." },
+    { title: "Ang salitang \"Ng\"", content: "<strong>\"Ng\"</strong> ay ginagamit bilang pang-ukol na nagpapahiwatig ng pag-aari." },
+    { title: "Pagkakaiba ng Nang at Ng", content: "\"Nang\" = oras/dahilan/kondisyon<br>\"Ng\" = pag-aari/pang-ukol" },
+    { title: "Halimbawa", content: "Halimbawa:<br>- Nang dumating siya... (oras)<br>- Bahay ng nanay (pag-aari)" },
+    { title: "Conclusion", content: "Ang tamang pag-unawa sa mga salitang ito ay makakatulong sa wastong pagsulat." }
+  ]
+};
+
+// Load available topics from database
+async function loadAvailableTopics() {
+  // Use the teacher.js function to load topics
+  await window.loadTopicsForSelect('topic-select');
+}
+
+async function loadLessonSlides() {
+  const topicSelect = document.getElementById('topic-select');
+  currentLesson = topicSelect.value;
+  console.log('loadLessonSlides called with currentLesson:', currentLesson, typeof currentLesson);
+
+  if (!currentLesson) {
+    document.getElementById('slides-editor').style.display = 'none';
+    return;
+  }
+
+  try {
+    // Try to load from Firebase first using teacher.js function
+    if (typeof window.loadContent === 'function') {
+      const content = await window.loadContent(currentLesson);
+      console.log('loadContent returned:', content, typeof content);
+
+      if (content && typeof content === 'string') {
+        try {
+          slidesData = JSON.parse(content);
+          console.log('Successfully parsed slides data:', slidesData);
+        } catch (parseError) {
+          console.error('Content is not valid JSON, trying localStorage fallback. Parse error:', parseError);
+          console.log('Raw content:', content);
+          // Try localStorage as fallback
+          const savedSlides = localStorage.getItem(`lesson-${currentLesson}`);
+          if (savedSlides) {
+            try {
+              slidesData = JSON.parse(savedSlides);
+              console.log('Loaded slides from localStorage:', slidesData);
+            } catch (localParseError) {
+              console.error('localStorage content also invalid:', localParseError);
+              slidesData = [];
+            }
+          } else {
+            slidesData = [];
+          }
+        }
+      } else {
+        console.log('No lesson content in Firebase, trying localStorage');
+        // Try localStorage as fallback
+        const savedSlides = localStorage.getItem(`lesson-${currentLesson}`);
+        slidesData = savedSlides ? JSON.parse(savedSlides) : [];
+      }
+    } else {
+      console.log('loadContent function not available, trying localStorage');
+      // Fallback to localStorage
+      const savedSlides = localStorage.getItem(`lesson-${currentLesson}`);
+      slidesData = savedSlides ? JSON.parse(savedSlides) : [];
+    }
+  } catch (error) {
+    console.error('Error loading lesson slides:', error);
+    // Try localStorage as final fallback
+    try {
+      const savedSlides = localStorage.getItem(`lesson-${currentLesson}`);
+      slidesData = savedSlides ? JSON.parse(savedSlides) : [];
+      console.log('Loaded slides from localStorage after Firebase error:', slidesData);
+    } catch (localError) {
+      console.error('localStorage also failed:', localError);
+      slidesData = [];
+    }
+  }
+
+  // Update title
+  const selectedOption = topicSelect.options[topicSelect.selectedIndex];
+  document.getElementById('lesson-title').textContent = selectedOption.textContent;
+
+  // Render slides
+  renderSlides();
+
+  // Show editor
+  document.getElementById('slides-editor').style.display = 'block';
+}
+
+function renderSlides() {
+  const container = document.getElementById('slides-container');
+  container.innerHTML = '';
+
+  slidesData.forEach((slide, index) => {
+    const slideDiv = document.createElement('div');
+    slideDiv.className = 'slide-editor';
+    slideDiv.innerHTML = `
+      <div class="slide-header">
+        <h3>Slide ${index + 1}</h3>
+        <div class="slide-actions">
+          ${index > 0 ? `<button onclick="moveSlideUp(${index})">⬆️</button>` : ''}
+          ${index < slidesData.length - 1 ? `<button onclick="moveSlideDown(${index})">⬇️</button>` : ''}
+          <button onclick="deleteSlide(${index})" class="delete-btn">🗑️</button>
+        </div>
+      </div>
+      <div class="slide-content">
+        <label>Title:</label>
+        <input type="text" class="slide-title" value="${slide.title}" onchange="updateSlideTitle(${index}, this.value)">
+        <label>Content:</label>
+        <textarea class="slide-content-text" rows="4" onchange="updateSlideContent(${index}, this.value)">${slide.content}</textarea>
+      </div>
+    `;
+    container.appendChild(slideDiv);
+  });
+}
+
+function updateSlideTitle(index, title) {
+  slidesData[index].title = title;
+}
+
+function updateSlideContent(index, content) {
+  slidesData[index].content = content;
+}
+
+function addNewSlide() {
+  slidesData.push({
+    title: 'New Slide',
+    content: 'Enter slide content here...'
+  });
+  renderSlides();
+}
+
+function deleteSlide(index) {
+  if (confirm('Sigurado ka bang tanggalin ang slide na ito?')) {
+    slidesData.splice(index, 1);
+    renderSlides();
+  }
+}
+
+function moveSlideUp(index) {
+  if (index > 0) {
+    [slidesData[index], slidesData[index - 1]] = [slidesData[index - 1], slidesData[index]];
+    renderSlides();
+  }
+}
+
+function moveSlideDown(index) {
+  if (index < slidesData.length - 1) {
+    [slidesData[index], slidesData[index + 1]] = [slidesData[index + 1], slidesData[index]];
+    renderSlides();
+  }
+}
+
+async function saveAllSlides() {
+  if (!currentLesson) return;
+
+  console.log('saveAllSlides called with currentLesson:', currentLesson, typeof currentLesson);
+
+  try {
+    // Convert slides data to JSON string for storage
+    const contentString = JSON.stringify(slidesData);
+    console.log('Saving slides data:', slidesData);
+    console.log('As JSON string:', contentString);
+
+    // Use the teacher.js saveContent function
+    if (typeof window.saveContent === 'function') {
+      await window.saveContent(currentLesson, contentString);
+      // Also save to localStorage as backup
+      localStorage.setItem(`lesson-${currentLesson}`, contentString);
+      alert('Matagumpay na na-save ang lahat ng slide sa database! ✅');
+    } else {
+      // Fallback to localStorage
+      localStorage.setItem(`lesson-${currentLesson}`, contentString);
+      alert('Saved to local storage (database not available)');
+    }
+
+    // Re-render slides to ensure display is updated
+    renderSlides();
+  } catch (error) {
+    console.error('Error saving slides:', error);
+    // Fallback to localStorage
+    const contentString = JSON.stringify(slidesData);
+    localStorage.setItem(`lesson-${currentLesson}`, contentString);
+    alert('Error saving to database, saved to local storage instead!');
+
+    // Re-render slides even on error
+    renderSlides();
+  }
+}
+
+// Load topics on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Wait for teacher module to load before loading topics
+  function tryLoadTopics() {
+    if (typeof window.loadTopicsForSelect !== 'undefined') {
+      loadAvailableTopics();
+      console.log('Topics loaded successfully for edit lesson');
+    } else {
+      console.log('Waiting for teacher module to load...');
+      setTimeout(tryLoadTopics, 500);
+    }
+  }
+
+  tryLoadTopics();
+
+  // Load lesson on page load if URL has parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const lessonParam = urlParams.get('lesson');
+  if (lessonParam) {
+    // Wait a bit for topics to load, then select the lesson
+    setTimeout(() => {
+      document.getElementById('topic-select').value = lessonParam;
+      loadLessonSlides();
+    }, 1000);
+  }
+});
+</script>
+
+<!-- Firebase is initialized in teacher.js module -->
+<script type="module" src="../js/teacher.js"></script>
+
+</body>
+</html>

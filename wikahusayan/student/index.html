@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wikahusayan Quest - Student</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- User Profile Dropdown -->
+<div class="user-profile">
+  <button class="profile-btn" onclick="toggleDropdown()">
+    <div id="user-avatar" class="user-avatar">
+      <img id="avatar-img" src="" alt="Avatar" style="display: none;">
+      <span id="avatar-fallback">👤</span>
+    </div>
+    <span id="user-name">Student</span>
+  </button>
+  <div class="dropdown-menu" id="profile-dropdown">
+    <a href="#" onclick="viewProfile()">Profile</a>
+    <a href="#" onclick="logout()">Logout</a>
+  </div>
+</div>
+
+<!-- Dashboard View -->
+<div id="dashboard" class="view" style="display:block;">
+  <h1>Wikahusayan Quest 📚 </h1>
+  <div class="welcome">
+   <span id="student-greeting">"Halina't sumabak sa Wikahusayan Quest—larong wika kung saan bawat hakbang ay sa tagumpay at gantimpala!"</span>
+  </div>
+
+  <div class="card-container" id="topics-container">
+    <!-- Topics will be loaded dynamically from database -->
+    <div class="loading">Loading topics...</div>
+  </div>
+
+  <div class="start-game-container">
+    <button class="start-game" onclick="window.location.href='games/select.html'">🎮 Pumunta sa Laro</button>
+  </div>
+</div>
+
+<script>
+// DiceBear API configuration
+const AVATAR_STYLES = ['adventurer', 'adventurer-neutral', 'avataaars', 'big-ears', 'big-ears-neutral', 'big-smile', 'bottts', 'croodles', 'croodles-neutral', 'female', 'female-neutral', 'fun-emoji', 'icons', 'identicon', 'initials', 'lorelei', 'lorelei-neutral', 'male', 'male-neutral', 'miniavs', 'open-peeps', 'personas', 'pixel-art', 'pixel-art-neutral', 'shapes'];
+const AVATAR_SEEDS = ['student1', 'student2', 'student3', 'student4', 'student5', 'student6', 'student7', 'student8', 'student9', 'student10', 'student11', 'student12'];
+
+function generateAvatarUrl(style, seed) {
+  return `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}&size=80&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+}
+
+// Load and display student's selected avatar (optimized for instant updates)
+function loadStudentAvatar() {
+  const savedAvatarUrl = sessionStorage.getItem('studentAvatar');
+  const avatarImg = document.getElementById('avatar-img');
+  const avatarFallback = document.getElementById('avatar-fallback');
+
+  if (savedAvatarUrl && avatarImg) {
+    // Show loading state briefly
+    if (avatarFallback) {
+      avatarFallback.textContent = '⏳';
+      avatarFallback.style.display = 'flex';
+    }
+
+    // Preload the image first for instant display
+    const img = new Image();
+    img.onload = function() {
+      avatarImg.src = savedAvatarUrl;
+      avatarImg.style.display = 'block';
+      if (avatarFallback) avatarFallback.style.display = 'none';
+    };
+    img.onerror = function() {
+      // Fallback to emoji if image fails to load
+      if (avatarImg) avatarImg.style.display = 'none';
+      if (avatarFallback) {
+        avatarFallback.textContent = '👤';
+        avatarFallback.style.display = 'flex';
+      }
+    };
+    img.src = savedAvatarUrl;
+  } else {
+    // Show fallback immediately if no avatar selected
+    if (avatarImg) avatarImg.style.display = 'none';
+    if (avatarFallback) {
+      avatarFallback.textContent = '👤';
+      avatarFallback.style.display = 'flex';
+    }
+  }
+}
+
+// Load profile data on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Load user name from session storage for dropdown
+  const userName = sessionStorage.getItem('studentName') || 'Student';
+  document.getElementById('user-name').textContent = userName;
+
+  // Load and display selected avatar
+  loadStudentAvatar();
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('profile-dropdown');
+    const profileBtn = document.querySelector('.profile-btn');
+    if (!profileBtn.contains(e.target)) {
+      dropdown.classList.remove('show');
+    }
+  });
+});
+
+function toggleDropdown() {
+  const dropdown = document.getElementById('profile-dropdown');
+  dropdown.classList.toggle('show');
+}
+
+function viewProfile() {
+  window.location.href = 'profile.html';
+}
+
+function logout() {
+  if (confirm('Sigurado ka bang mag-logout?')) {
+    signOut(auth).then(() => {
+      // Sign-out successful, clear local storage and redirect
+      sessionStorage.clear();
+      localStorage.clear();
+      window.location.href = '../public/index.html';
+    }).catch((error) => {
+      // An error happened
+      console.error('Error signing out:', error);
+      // Still clear storage and redirect even if Firebase signout fails
+      sessionStorage.clear();
+      localStorage.clear();
+      window.location.href = '../public/index.html';
+    });
+  }
+}
+</script>
+
+<script type="module" src="js/student.js"></script>
+</body>
+</html>
