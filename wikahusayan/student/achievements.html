@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Achievements - Wikahusayan Quest</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script type="module">
+// Firebase imports
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyD9khDPPquuztCUWLfzithwPmQFpI8t49g",
+  authDomain: "wikahusayan-quest.firebaseapp.com",
+  projectId: "wikahusayan-quest",
+  storageBucket: "wikahusayan-quest.firebasestorage.app",
+  messagingSenderId: "744849133114",
+  appId: "1:744849133114:web:31c5f34bc1ace7e3a5ef03"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+
+// Check authentication
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+  if (user) {
+    loadAchievements();
+  } else {
+    showLoginRequired();
+  }
+});
+
+// Load user achievements
+async function loadAchievements() {
+  try {
+    showLoading();
+
+    const userRef = doc(db, 'users', currentUser.uid);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      const earnedBadges = userData.badges || [];
+      const totalPoints = userData.totalPoints || 0;
+      const gamesPlayed = userData.gamesPlayed || 0;
+
+      renderAchievements(earnedBadges, totalPoints, gamesPlayed);
+    } else {
+      renderAchievements([], 0, 0);
+    }
+
+    hideLoading();
+  } catch (error) {
+    console.error('Error loading achievements:', error);
+    hideLoading();
+    showError('Failed to load achievements. Please try again.');
+  }
+}
+
+// Render achievements
+function renderAchievements(earnedBadges, totalPoints, gamesPlayed) {
+  const container = document.getElementById('achievements-content');
+
+  // Calculate progress for each badge category
+  const badgeProgress = calculateBadgeProgress(totalPoints, gamesPlayed, earnedBadges);
+
+  let html = `
+    <div class="achievements-header">
+      <h2>🏅 Your Achievements</h2>
+      <div class="stats-overview">
+        <div class="stat-card">
+          <div class="stat-number">${totalPoints.toLocaleString()}</div>
+          <div class="stat-label">Total Points</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">${earnedBadges.length}</div>
+          <div class="stat-label">Badges Earned</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">${gamesPlayed}</div>
+          <div class="stat-label">Games Played</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="badge-categories">
+  `;
+
+  // Points Category
+  html += `
+    <div class="badge-category">
+      <h3>⭐ Points Master</h3>
+      <p>Earn points by playing games and getting correct answers</p>
+      <div class="badge-grid">
+        ${renderBadge('points_novice', earnedBadges, badgeProgress.points_novice)}
+        ${renderBadge('points_expert', earnedBadges, badgeProgress.points_expert)}
+        ${renderBadge('points_master', earnedBadges, badgeProgress.points_master)}
+      </div>
+    </div>
+  `;
+
+  // Gaming Category
+  html += `
+    <div class="badge-category">
+      <h3>🎮 Gaming Achievements</h3>
+      <p>Play more games to unlock these achievements</p>
+      <div class="badge-grid">
+        ${renderBadge('first_game', earnedBadges, badgeProgress.first_game)}
+        ${renderBadge('game_regular', earnedBadges, badgeProgress.game_regular)}
+        ${renderBadge('game_veteran', earnedBadges, badgeProgress.game_veteran)}
+      </div>
+    </div>
+  `;
+
+  // Puzzle Category
+  html += `
+    <div class="badge-category">
+      <h3>🧩 Puzzle Master</h3>
+      <p>Master the drag & drop puzzle challenges</p>
+      <div class="badge-grid">
+        ${renderBadge('matching_enthusiast', earnedBadges, badgeProgress.matching_enthusiast)}
+        ${renderBadge('matching_perfect', earnedBadges, badgeProgress.matching_perfect)}
+      </div>
+    </div>
+  `;
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// Calculate progress for badges
+function calculateBadgeProgress(totalPoints, gamesPlayed, earnedBadges) {
+  return {
+    points_novice: earnedBadges.includes('points_novice') ? 100 : Math.min((totalPoints / 100) * 100, 100),
+    points_expert: earnedBadges.includes('points_expert') ? 100 : Math.min((totalPoints / 500) * 100, 100),
+    points_master: earnedBadges.includes('points_master') ? 100 : Math.min((totalPoints / 1000) * 100, 100),
+    first_game: earnedBadges.includes('first_game') ? 100 : gamesPlayed >= 1 ? 100 : (gamesPlayed / 1) * 100,
+    game_regular: earnedBadges.includes('game_regular') ? 100 : Math.min((gamesPlayed / 5) * 100, 100),
+    game_veteran: earnedBadges.includes('game_veteran') ? 100 : Math.min((gamesPlayed / 10) * 100, 100),
+    matching_enthusiast: earnedBadges.includes('matching_enthusiast') ? 100 : 100, // This would need more complex logic
+    matching_perfect: earnedBadges.includes('matching_perfect') ? 100 : 100 // This would need more complex logic
+  };
+}
+
+// Render individual badge
+function renderBadge(badgeId, earnedBadges, progress) {
+  const isEarned = earnedBadges.includes(badgeId);
+  const badgeData = getBadgeData(badgeId);
+
+  return `
+    <div class="badge-card ${isEarned ? 'earned' : 'locked'}">
+      <div class="badge-icon">
+        ${badgeData.icon}
+      </div>
+      <div class="badge-info">
+        <h4>${badgeData.name}</h4>
+        <p>${badgeData.description}</p>
+        ${!isEarned ? `<div class="progress-bar"><div class="progress-fill" style="width: ${progress}%"></div></div>` : ''}
+      </div>
+      ${isEarned ? '<div class="earned-badge">✓</div>' : ''}
+    </div>
+  `;
+}
+
+// Get badge data
+function getBadgeData(badgeId) {
+  const badges = {
+    'first_game': {
+      name: 'First Steps',
+      description: 'Play your first game',
+      icon: '🎮'
+    },
+    'game_regular': {
+      name: 'Regular Player',
+      description: 'Play 5 games',
+      icon: '🎯'
+    },
+    'game_veteran': {
+      name: 'Game Veteran',
+      description: 'Play 10 games',
+      icon: '🏆'
+    },
+    'points_novice': {
+      name: 'Point Novice',
+      description: 'Earn 100 points',
+      icon: '⭐'
+    },
+    'points_expert': {
+      name: 'Point Expert',
+      description: 'Earn 500 points',
+      icon: '🌟'
+    },
+    'points_master': {
+      name: 'Point Master',
+      description: 'Earn 1000 points',
+      icon: '💎'
+    },
+    'matching_enthusiast': {
+      name: 'Puzzle Enthusiast',
+      description: 'Play matching game 3 times',
+      icon: '🧩'
+    },
+    'matching_perfect': {
+      name: 'Perfect Match',
+      description: 'Get perfect score 5 times',
+      icon: '🎯'
+    }
+  };
+
+  return badges[badgeId] || {
+    name: 'Unknown Badge',
+    description: 'Achievement details',
+    icon: '🏅'
+  };
+}
+
+// UI helper functions
+function showLoading() {
+  document.getElementById('loading').style.display = 'block';
+}
+
+function hideLoading() {
+  document.getElementById('loading').style.display = 'none';
+}
+
+function showError(message) {
+  const container = document.getElementById('achievements-content');
+  container.innerHTML = `
+    <div class="error-state">
+      <h3>❌ Error</h3>
+      <p>${message}</p>
+      <button onclick="loadAchievements()" class="retry-btn">Try Again</button>
+    </div>
+  `;
+}
+
+function showLoginRequired() {
+  const container = document.getElementById('achievements-content');
+  container.innerHTML = `
+    <div class="login-required">
+      <h3>🔐 Authentication Required</h3>
+      <p>Please log in to view your achievements.</p>
+      <a href="../index.html" class="login-btn">Go to Login</a>
+    </div>
+  `;
+}
+
+// Make functions globally available
+window.loadAchievements = loadAchievements;
+    </script>
+    <style>
+/* Advanced Professional Achievements Styles */
+.achievements-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.achievements-header {
+  text-align: center;
+  margin-bottom: 40px;
+  color: #2c3e50;
+}
+
+.achievements-header h2 {
+  font-size: 2.5rem;
+  font-weight: 300;
+  margin-bottom: 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stats-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.stat-card {
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #667eea;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+/* Badge Categories */
+.badge-categories {
+  display: grid;
+  gap: 40px;
+}
+
+.badge-category {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
+}
+
+.badge-category h3 {
+  font-size: 1.5rem;
+  color: #2c3e50;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.badge-category p {
+  color: #6c757d;
+  margin-bottom: 25px;
+  font-size: 1rem;
+}
+
+/* Badge Grid */
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+/* Badge Cards */
+.badge-card {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  border-radius: 15px;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.badge-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.badge-card:hover::before {
+  opacity: 1;
+}
+
+.badge-card.earned {
+  border-color: #28a745;
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.05) 0%, rgba(34, 197, 94, 0.05) 100%);
+}
+
+.badge-card.earned:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.2);
+}
+
+.badge-card.locked {
+  opacity: 0.7;
+  filter: grayscale(30%);
+}
+
+.badge-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  margin-right: 20px;
+  border: 2px solid #dee2e6;
+  flex-shrink: 0;
+}
+
+.badge-card.earned .badge-icon {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  border-color: #28a745;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.badge-info {
+  flex: 1;
+  position: relative;
+  z-index: 2;
+}
+
+.badge-info h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 5px;
+}
+
+.badge-info p {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #e9ecef;
+  border-radius: 3px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.earned-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #28a745;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+  z-index: 3;
+}
+
+/* Empty and Error States */
+.error-state, .login-required {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
+}
+
+.error-state h3, .login-required h3 {
+  font-size: 1.5rem;
+  color: #6c757d;
+  margin-bottom: 15px;
+}
+
+.error-state p, .login-required p {
+  color: #adb5bd;
+  font-size: 1rem;
+  margin-bottom: 20px;
+}
+
+.login-btn, .retry-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.login-btn:hover, .retry-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Loading State */
+#loading {
+  display: none;
+  text-align: center;
+  padding: 40px;
+}
+
+#loading::after {
+  content: '';
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: block;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .achievements-container {
+    padding: 15px;
+  }
+
+  .achievements-header h2 {
+    font-size: 2rem;
+  }
+
+  .stats-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .badge-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .badge-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .badge-icon {
+    margin-right: 0;
+    margin-bottom: 15px;
+  }
+
+  .badge-category {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stat-card {
+    padding: 20px;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+  }
+}
+    </style>
+</head>
+<body>
+    <a href="select.html" style="position: fixed; top: 20px; left: 20px; background: #FF6B6B; color: white; padding: 10px 20px; border-radius: 25px; text-decoration: none; z-index: 1000;">← Bumalik</a>
+
+    <div class="achievements-container">
+        <div id="loading">Loading achievements...</div>
+
+        <div id="achievements-content">
+            <!-- Achievements will be populated here -->
+        </div>
+    </div>
+</body>
+</html>
