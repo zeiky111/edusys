@@ -278,7 +278,36 @@ export async function getLeaderboard(gameType, limitCount = 10) {
   }
 }
 
-// ===== GAME QUESTIONS FUNCTIONS =====
+// Get user's ranking based on total points
+export async function getUserRanking(userId) {
+  try {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, orderBy('totalPoints', 'desc'));
+    const querySnapshot = await getDocs(q);
+    
+    let ranking = 1;
+    let userRank = null;
+    let totalUsers = 0;
+    
+    querySnapshot.forEach((doc) => {
+      totalUsers++;
+      if (doc.id === userId) {
+        userRank = ranking;
+      } else {
+        ranking++;
+      }
+    });
+    
+    return {
+      rank: userRank,
+      totalUsers: totalUsers,
+      percentile: userRank ? ((totalUsers - userRank + 1) / totalUsers) * 100 : null
+    };
+  } catch (error) {
+    console.error('Error getting user ranking:', error);
+    return null;
+  }
+}
 
 // Save game questions for a specific game type
 export async function saveGameQuestions(gameType, questions) {
@@ -615,11 +644,16 @@ export async function saveGameScore(userId, gameType, score, displayName = null,
       updateData.badges = [];
     }
 
-    // Check for new badges based on total points
-    const newBadges = checkForNewBadges(updateData.totalPoints, existingData?.badges || []);
+    // Check for new badges based on points
+    const newBadges = await checkForNewBadges(userId, existingData?.badges || [], updateData.totalPoints);
     if (newBadges.length > 0) {
-      updateData.badges = [...(existingData?.badges || []), ...newBadges];
-      console.log('🏆 New badges earned:', newBadges);
+      // Replace old ranking badges with new ones
+      const badgeHierarchy = ['Silver Scholar', 'Gold Scholar', 'Platinum Scholar', 'Diamond Scholar', 'Master Scholar'];
+      const rankingBadges = newBadges.filter(badge => badgeHierarchy.includes(badge));
+      const nonRankingBadges = (existingData?.badges || []).filter(badge => !badgeHierarchy.includes(badge));
+      
+      updateData.badges = [...nonRankingBadges, ...rankingBadges];
+      console.log('🏆 Badge update - New ranking badges:', rankingBadges);
     }
 
     if (docRef) {
@@ -726,38 +760,89 @@ export async function getStudentTotalPoints(userId) {
 }
 
 // Check for new badges based on points
-function checkForNewBadges(totalPoints, existingBadges) {
+async function checkForNewBadges(userId, existingBadges, totalPoints) {
   const newBadges = [];
-
+  
+  // Points-based badges with varied thresholds
   const badgeThresholds = [
-    { points: 100, badge: 'Bronze Scholar' },
-    { points: 250, badge: 'Silver Scholar' },
-    { points: 500, badge: 'Gold Scholar' },
-    { points: 1000, badge: 'Platinum Scholar' },
-    { points: 2000, badge: 'Diamond Scholar' },
-    { points: 5000, badge: 'Master Scholar' }
+    { points: 10, badge: 'Silver Scholar' },
+    { points: 50, badge: 'Gold Scholar' },
+    { points: 150, badge: 'Platinum Scholar' },
+    { points: 300, badge: 'Diamond Scholar' },
+    { points: 600, badge: 'Master Scholar' }
   ];
-
-  badgeThresholds.forEach(({ points, badge }) => {
-    if (totalPoints >= points && !existingBadges.includes(badge)) {
-      newBadges.push(badge);
+  
+  // Find the highest badge the user qualifies for
+  let qualifiedBadge = null;
+  for (const { points, badge } of badgeThresholds) {
+    if (totalPoints >= points) {
+      qualifiedBadge = badge;
+    } else {
+      break; // Since they're ordered by difficulty
     }
-  });
-
-  // Special badges for game types
-  if (totalPoints >= 100 && !existingBadges.includes('First Steps')) {
+  }
+  
+  if (qualifiedBadge) {
+    // Check if user already has this badge or a higher one
+    const badgeHierarchy = ['Silver Scholar', 'Gold Scholar', 'Platinum Scholar', 'Diamond Scholar', 'Master Scholar'];
+    const currentBadgeIndex = existingBadges.find(badge => badgeHierarchy.includes(badge)) 
+      ? badgeHierarchy.findIndex(badge => existingBadges.includes(badge)) 
+      : -1;
+    const qualifiedBadgeIndex = badgeHierarchy.indexOf(qualifiedBadge);
+    
+    if (qualifiedBadgeIndex > currentBadgeIndex) {
+      newBadges.push(qualifiedBadge);
+    }
+  }
+  
+  // Special badges for participation
+  if (!existingBadges.includes('First Steps')) {
     newBadges.push('First Steps');
   }
-
-  if (totalPoints >= 500 && !existingBadges.includes('Knowledge Seeker')) {
+  
+  if (!existingBadges.includes('Knowledge Seeker')) {
     newBadges.push('Knowledge Seeker');
   }
-
+  
   return newBadges;
 }
 
-// Save badge (for manual badge awarding)
-export async function saveBadge(userId, badgeName) {
+// Update user badges based on current points
+export async function updateUserBadges(userId) {
+  try {
+    const userRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userRef);
+    
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      const existingBadges = userData.badges || [];
+      const totalPoints = userData.totalPoints || 0;
+      
+      const newBadges = await checkForNewBadges(userId, existingBadges, totalPoints);
+      
+      if (newBadges.length > 0) {
+        // Replace old ranking badges with new ones
+        const badgeHierarchy = ['Silver Scholar', 'Gold Scholar', 'Platinum Scholar', 'Diamond Scholar', 'Master Scholar'];
+        const rankingBadges = newBadges.filter(badge => badgeHierarchy.includes(badge));
+        const nonRankingBadges = existingBadges.filter(badge => !badgeHierarchy.includes(badge));
+        
+        const updatedBadges = [...nonRankingBadges, ...rankingBadges];
+        
+        await updateDoc(userRef, {
+          badges: updatedBadges,
+          updatedAt: new Date()
+        });
+        
+        console.log(`🏆 Updated badges for user ${userId} (${totalPoints} points):`, updatedBadges);
+      }
+    }
+    
+    return existingBadges;
+  } catch (error) {
+    console.error('Error updating user badges:', error);
+    return [];
+  }
+}
   try {
     const leaderboardRef = collection(db, 'leaderboard');
     const q = query(leaderboardRef, where('userId', '==', userId));
@@ -783,7 +868,7 @@ export async function saveBadge(userId, badgeName) {
     console.error('Error saving badge:', error);
     throw error;
   }
-}
+
 
 // Get student's badges
 export async function getStudentBadges(userId) {

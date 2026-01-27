@@ -29,6 +29,24 @@ const db = getFirestore(app);
 let currentUser = null;
 let currentView = 'overall';
 
+// Function to get ranking badge based on points
+function getRankingBadge(totalPoints) {
+  const badgeThresholds = [
+    { points: 10, badge: 'Silver Scholar' },
+    { points: 50, badge: 'Gold Scholar' },
+    { points: 150, badge: 'Platinum Scholar' },
+    { points: 300, badge: 'Diamond Scholar' },
+    { points: 600, badge: 'Master Scholar' }
+  ];
+  
+  for (let i = badgeThresholds.length - 1; i >= 0; i--) {
+    if (totalPoints >= badgeThresholds[i].points) {
+      return badgeThresholds[i].badge;
+    }
+  }
+  return null;
+}
+
 // Check authentication
 onAuthStateChanged(auth, (user) => {
   currentUser = user;
@@ -84,7 +102,6 @@ async function loadOverallLeaderboard() {
 
       let totalPoints = 0;
       let gamesPlayed = 0;
-      let badges = userData.badges || [];
 
       progressSnapshot.forEach(doc => {
         const data = doc.data();
@@ -100,7 +117,7 @@ async function loadOverallLeaderboard() {
           displayName: userData.displayName || userData.email || 'Anonymous',
           totalPoints,
           gamesPlayed,
-          badges: badges.length,
+          badges: getRankingBadge(totalPoints),
           avatar: userData.photoURL || null
         });
       }
@@ -210,7 +227,7 @@ function renderOverallLeaderboard(data) {
             <div class="player-stats">
               <span class="points">${player.totalPoints.toLocaleString()} pts</span>
               <span class="games">${player.gamesPlayed} games</span>
-              <span class="badges">🏅 ${player.badges} badges</span>
+              <span class="badges">${player.badges ? `🏅 ${player.badges}` : ''}</span>
             </div>
           </div>
         </div>

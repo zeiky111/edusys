@@ -10,6 +10,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
 import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+import { updateUserBadges } from '../firebase/database.js';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -43,6 +44,9 @@ async function loadAchievements() {
   try {
     showLoading();
 
+    // First update badges based on current points
+    await updateUserBadges(currentUser.uid);
+    
     const userRef = doc(db, 'users', currentUser.uid);
     const userSnap = await getDoc(userRef);
 
@@ -51,10 +55,10 @@ async function loadAchievements() {
       const earnedBadges = userData.badges || [];
       const totalPoints = userData.totalPoints || 0;
       const gamesPlayed = userData.gamesPlayed || 0;
-
-      renderAchievements(earnedBadges, totalPoints, gamesPlayed);
+      
+      renderAchievements(earnedBadges, totalPoints, gamesPlayed, null);
     } else {
-      renderAchievements([], 0, 0);
+      renderAchievements([], 0, 0, null);
     }
 
     hideLoading();
@@ -66,11 +70,11 @@ async function loadAchievements() {
 }
 
 // Render achievements
-function renderAchievements(earnedBadges, totalPoints, gamesPlayed) {
+function renderAchievements(earnedBadges, totalPoints, gamesPlayed, ranking) {
   const container = document.getElementById('achievements-content');
 
   // Calculate progress for each badge category
-  const badgeProgress = calculateBadgeProgress(totalPoints, gamesPlayed, earnedBadges);
+  const badgeProgress = calculateBadgeProgress(totalPoints, gamesPlayed, earnedBadges, ranking);
 
   let html = `
     <div class="achievements-header">
@@ -97,12 +101,17 @@ function renderAchievements(earnedBadges, totalPoints, gamesPlayed) {
   // Points Category
   html += `
     <div class="badge-category">
-      <h3>⭐ Points Master</h3>
+      <h3>⭐ Scholar Achievements</h3>
       <p>Earn points by playing games and getting correct answers</p>
       <div class="badge-grid">
-        ${renderBadge('points_novice', earnedBadges, badgeProgress.points_novice)}
-        ${renderBadge('points_expert', earnedBadges, badgeProgress.points_expert)}
-        ${renderBadge('points_master', earnedBadges, badgeProgress.points_master)}
+        ${renderBadge('First Steps', earnedBadges, badgeProgress.first_steps)}
+        ${renderBadge('Bronze Scholar', earnedBadges, badgeProgress.bronze)}
+        ${renderBadge('Silver Scholar', earnedBadges, badgeProgress.silver)}
+        ${renderBadge('Gold Scholar', earnedBadges, badgeProgress.gold)}
+        ${renderBadge('Knowledge Seeker', earnedBadges, badgeProgress.knowledge_seeker)}
+        ${renderBadge('Platinum Scholar', earnedBadges, badgeProgress.platinum)}
+        ${renderBadge('Diamond Scholar', earnedBadges, badgeProgress.diamond)}
+        ${renderBadge('Master Scholar', earnedBadges, badgeProgress.master)}
       </div>
     </div>
   `;
@@ -113,7 +122,6 @@ function renderAchievements(earnedBadges, totalPoints, gamesPlayed) {
       <h3>🎮 Gaming Achievements</h3>
       <p>Play more games to unlock these achievements</p>
       <div class="badge-grid">
-        ${renderBadge('first_game', earnedBadges, badgeProgress.first_game)}
         ${renderBadge('game_regular', earnedBadges, badgeProgress.game_regular)}
         ${renderBadge('game_veteran', earnedBadges, badgeProgress.game_veteran)}
       </div>
@@ -137,12 +145,16 @@ function renderAchievements(earnedBadges, totalPoints, gamesPlayed) {
 }
 
 // Calculate progress for badges
-function calculateBadgeProgress(totalPoints, gamesPlayed, earnedBadges) {
+function calculateBadgeProgress(totalPoints, gamesPlayed, earnedBadges, ranking) {
   return {
-    points_novice: earnedBadges.includes('points_novice') ? 100 : Math.min((totalPoints / 100) * 100, 100),
-    points_expert: earnedBadges.includes('points_expert') ? 100 : Math.min((totalPoints / 500) * 100, 100),
-    points_master: earnedBadges.includes('points_master') ? 100 : Math.min((totalPoints / 1000) * 100, 100),
-    first_game: earnedBadges.includes('first_game') ? 100 : gamesPlayed >= 1 ? 100 : (gamesPlayed / 1) * 100,
+    first_steps: earnedBadges.includes('First Steps') ? 100 : 100, // Always earned after first game
+    bronze: earnedBadges.includes('Bronze Scholar') ? 100 : Math.min((totalPoints / 10) * 100, 100),
+    silver: earnedBadges.includes('Silver Scholar') ? 100 : Math.min((totalPoints / 50) * 100, 100),
+    gold: earnedBadges.includes('Gold Scholar') ? 100 : Math.min((totalPoints / 150) * 100, 100),
+    knowledge_seeker: earnedBadges.includes('Knowledge Seeker') ? 100 : 100, // Always earned
+    platinum: earnedBadges.includes('Platinum Scholar') ? 100 : Math.min((totalPoints / 300) * 100, 100),
+    diamond: earnedBadges.includes('Diamond Scholar') ? 100 : Math.min((totalPoints / 600) * 100, 100),
+    master: earnedBadges.includes('Master Scholar') ? 100 : Math.min((totalPoints / 1000) * 100, 100),
     game_regular: earnedBadges.includes('game_regular') ? 100 : Math.min((gamesPlayed / 5) * 100, 100),
     game_veteran: earnedBadges.includes('game_veteran') ? 100 : Math.min((gamesPlayed / 10) * 100, 100),
     matching_enthusiast: earnedBadges.includes('matching_enthusiast') ? 100 : 100, // This would need more complex logic
@@ -173,10 +185,45 @@ function renderBadge(badgeId, earnedBadges, progress) {
 // Get badge data
 function getBadgeData(badgeId) {
   const badges = {
-    'first_game': {
+    'First Steps': {
       name: 'First Steps',
-      description: 'Play your first game',
-      icon: '🎮'
+      description: 'Complete your first game',
+      icon: '👶'
+    },
+    'Bronze Scholar': {
+      name: 'Bronze Scholar',
+      description: 'Earn 10 points',
+      icon: '🥉'
+    },
+    'Silver Scholar': {
+      name: 'Silver Scholar',
+      description: 'Earn 50 points',
+      icon: '🥈'
+    },
+    'Gold Scholar': {
+      name: 'Gold Scholar',
+      description: 'Earn 150 points',
+      icon: '🥇'
+    },
+    'Knowledge Seeker': {
+      name: 'Knowledge Seeker',
+      description: 'Active participant in learning',
+      icon: '🔍'
+    },
+    'Platinum Scholar': {
+      name: 'Platinum Scholar',
+      description: 'Earn 300 points',
+      icon: '💎'
+    },
+    'Diamond Scholar': {
+      name: 'Diamond Scholar',
+      description: 'Earn 600 points',
+      icon: '💍'
+    },
+    'Master Scholar': {
+      name: 'Master Scholar',
+      description: 'Earn 1000 points',
+      icon: '👑'
     },
     'game_regular': {
       name: 'Regular Player',
@@ -187,21 +234,6 @@ function getBadgeData(badgeId) {
       name: 'Game Veteran',
       description: 'Play 10 games',
       icon: '🏆'
-    },
-    'points_novice': {
-      name: 'Point Novice',
-      description: 'Earn 100 points',
-      icon: '⭐'
-    },
-    'points_expert': {
-      name: 'Point Expert',
-      description: 'Earn 500 points',
-      icon: '🌟'
-    },
-    'points_master': {
-      name: 'Point Master',
-      description: 'Earn 1000 points',
-      icon: '💎'
     },
     'matching_enthusiast': {
       name: 'Puzzle Enthusiast',

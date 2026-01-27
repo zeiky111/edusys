@@ -941,6 +941,8 @@ h1 {
   box-shadow: var(--glow-shadow);
   max-width: 500px;
   width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
   text-align: center;
   color: #333;
 }

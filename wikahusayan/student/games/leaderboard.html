@@ -456,7 +456,7 @@
                     }
 
                     const score = data.sortValue || data.totalPoints || data.points || 0;
-                    const badges = data.badges || [];
+                    const badges = (data.badges || []).filter(badge => badge !== 'Bronze Scholar');
 
                     // For overall leaderboard, show breakdown
                     let scoreDisplay = `${score} pts`;

@@ -561,9 +561,9 @@ window.loadTopics = loadTopics;
 window.loadTopicsForSelect = loadTopicsForSelect;
 window.loadContent = loadContent;
 window.saveContent = saveContent;
-window.clearLeaderboardData = clearLeaderboardData;
-window.showClearLeaderboardModal = showClearLeaderboardModal;
-window.hideClearLeaderboardModal = hideClearLeaderboardModal;
+// window.clearLeaderboardData = clearLeaderboardData; // Removed - defined later
+// window.showClearLeaderboardModal = showClearLeaderboardModal; // Removed - defined later
+// window.hideClearLeaderboardModal = hideClearLeaderboardModal; // Removed - defined later
 window.logout = logout;
 
 console.log('All teacher functions assigned to window object');
@@ -582,25 +582,65 @@ console.log('Available functions check:', {
 
 // Show clear leaderboard modal
 window.showClearLeaderboardModal = function() {
-  document.getElementById('clear-leaderboard-modal').style.display = 'flex';
+  console.log('showClearLeaderboardModal called');
+  const modal = document.getElementById('clear-leaderboard-modal');
+  console.log('Modal element:', modal);
+  if (modal) {
+    modal.style.display = 'flex';
+    console.log('Modal displayed');
+  } else {
+    console.error('Modal not found');
+  }
 }
 
 // Hide clear leaderboard modal
 window.hideClearLeaderboardModal = function() {
-  document.getElementById('clear-leaderboard-modal').style.display = 'none';
+  const modal = document.getElementById('clear-leaderboard-modal');
+  modal.style.display = 'none';
+  
+  // Reset modal content to original form
+  const modalContent = modal.querySelector('.modal-content');
+  modalContent.innerHTML = `
+    <h2>🗑️ Clear Leaderboard Data</h2>
+    <p>Are you sure you want to clear all leaderboard data? This action cannot be undone. Use the game progress option to reset all student scores.</p>
+    
+    <div class="leaderboard-options">
+      <label><input type="checkbox" id="clear-ladder" checked> Ladder Quiz Leaderboard</label><br>
+      <label><input type="checkbox" id="clear-speed" checked> Speed Challenge Leaderboard</label><br>
+      <label><input type="checkbox" id="clear-drag-drop" checked> Drag & Drop Puzzle Leaderboard</label><br>
+      <label><input type="checkbox" id="clear-quest" checked> Quest Game Leaderboard</label><br>
+      <label><input type="checkbox" id="clear-general" checked> General Leaderboard</label><br>
+      <label><input type="checkbox" id="clear-game-progress"> ⚠️ Clear ALL Game Progress Data (Resets all student scores)</label><br>
+    </div>
+    
+    <div class="modal-buttons">
+      <button class="cancel-btn" onclick="if(window.hideClearLeaderboardModal) window.hideClearLeaderboardModal(); else alert('Loading...')">Cancel</button>
+      <button class="confirm-btn" onclick="if(window.clearLeaderboardData) window.clearLeaderboardData(); else alert('Loading...')">Clear Data</button>
+    </div>
+  `;
 }
 
 // Clear leaderboard data
 window.clearLeaderboardData = async function() {
+  console.log('clearLeaderboardData called');
+  console.log('currentUser:', currentUser);
+  console.log('isAuthenticated:', isAuthenticated);
+  
   // Check if user is authenticated
   if (!currentUser) {
+    console.log('No current user');
     alert('❌ You must be logged in as a teacher to perform this action.');
     return;
   }
 
-  if (!confirm('Are you sure you want to clear the selected leaderboard data? This action cannot be undone!')) {
+  console.log('User authenticated:', currentUser.uid);
+
+  if (!confirm('Are you sure you want to clear the selected leaderboard data? This action cannot be undone and will permanently delete the selected data!')) {
+    console.log('User cancelled');
     return;
   }
+
+  console.log('User confirmed');
 
   const collectionsToClear = [];
   
@@ -619,6 +659,11 @@ window.clearLeaderboardData = async function() {
   if (document.getElementById('clear-general').checked) {
     collectionsToClear.push('leaderboard');
   }
+  if (document.getElementById('clear-game-progress').checked) {
+    collectionsToClear.push('game_progress');
+  }
+
+  console.log('Collections to clear:', collectionsToClear);
 
   if (collectionsToClear.length === 0) {
     alert('Please select at least one leaderboard to clear.');
@@ -627,10 +672,14 @@ window.clearLeaderboardData = async function() {
 
   try {
     let totalDeleted = 0;
+    let results = [];
     
     for (const collectionName of collectionsToClear) {
+      console.log('Clearing collection:', collectionName);
       const collectionRef = collection(db, collectionName);
       const querySnapshot = await getDocs(collectionRef);
+      
+      console.log('Found', querySnapshot.size, 'documents in', collectionName);
       
       const deletePromises = [];
       querySnapshot.forEach((doc) => {
@@ -640,14 +689,40 @@ window.clearLeaderboardData = async function() {
       await Promise.all(deletePromises);
       totalDeleted += querySnapshot.size;
       
+      results.push(`✅ ${collectionName}: ${querySnapshot.size} entries cleared`);
       console.log(`✅ Cleared ${querySnapshot.size} documents from ${collectionName}`);
     }
     
-    hideClearLeaderboardModal();
-    alert(`✅ Successfully cleared ${totalDeleted} leaderboard entries from ${collectionsToClear.length} collections.`);
+    // Show results in modal instead of alert
+    const modalContent = document.querySelector('#clear-leaderboard-modal .modal-content');
+    modalContent.innerHTML = `
+      <h2>🗑️ Clear Complete</h2>
+      <div style="text-align: left; background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0;">
+        <h3 style="margin-top: 0; color: #28a745;">✅ Success!</h3>
+        <p><strong>Total entries cleared: ${totalDeleted}</strong></p>
+        <div style="margin-top: 10px;">
+          ${results.map(result => `<div>${result}</div>`).join('')}
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button class="confirm-btn" onclick="hideClearLeaderboardModal()" style="width: 100%;">Close</button>
+      </div>
+    `;
     
   } catch (error) {
     console.error('❌ Error clearing leaderboard data:', error);
-    alert('❌ Error clearing leaderboard data: ' + error.message);
+    
+    // Show error in modal instead of alert
+    const modalContent = document.querySelector('#clear-leaderboard-modal .modal-content');
+    modalContent.innerHTML = `
+      <h2>🗑️ Clear Failed</h2>
+      <div style="text-align: left; background: #f8d7da; padding: 15px; border-radius: 10px; margin: 20px 0; border: 1px solid #f5c6cb;">
+        <h3 style="margin-top: 0; color: #721c24;">❌ Error</h3>
+        <p>${error.message}</p>
+      </div>
+      <div class="modal-buttons">
+        <button class="cancel-btn" onclick="hideClearLeaderboardModal()" style="width: 100%;">Close</button>
+      </div>
+    `;
   }
 }
