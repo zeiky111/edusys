@@ -489,12 +489,12 @@
 
                     const score = item.sortValue || data.totalPoints || data.points || 0;
                     const badges = (data.badges || []).filter(badge => badge !== 'Bronze Scholar');
-                    console.log(`📊 Rendering rank ${rank}:`, { displayName: data.displayName, points: score, badges: badges, allBadges: data.badges });
+                    console.log(`📊 Rendering rank ${rank}:`, { displayName: data.displayName, points: score, badges: badges, allBadges: data.badges, dataObj: data });
 
                     // For overall leaderboard, show breakdown
                     let scoreDisplay = `${score} pts`;
                     if (type === 'overall' && data.ladderPoints !== undefined && data.speedPoints !== undefined) {
-                        scoreDisplay = `${score} pts (L:${data.ladderPoints} + S:${data.speedPoints})`;
+                        scoreDisplay = `${score} pts (A:${data.ladderPoints} + P:${data.speedPoints})`;
                     }
 
                     // Create badge elements with proper class handling

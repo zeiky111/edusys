@@ -84,10 +84,12 @@ async function saveGameScore(userId, gameType, score, displayName = null, groupN
 
         if (docRef) {
             // Update existing document
+            console.log('📝 Updating existing document with:', { updateData });
             await updateDoc(docRef, updateData);
         } else {
             // Create new document
             updateData.createdAt = new Date();
+            console.log('🆕 Creating new document with:', { updateData });
             await addDoc(leaderboardRef, updateData);
         }
 
