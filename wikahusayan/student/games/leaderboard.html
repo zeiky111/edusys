@@ -164,6 +164,9 @@
         .badge.bronze { background: linear-gradient(135deg, #CD7F32, #A0522D); color: white; }
         .badge.master { background: linear-gradient(135deg, #FF6B6B, #EE5A24); color: white; }
         .badge.champion { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .badge.gold\ medal { background: linear-gradient(135deg, #FFD700, #FFA500); color: white; font-weight: 700; font-size: 13px; }
+        .badge.silver\ medal { background: linear-gradient(135deg, #C0C0C0, #A8A8A8); color: white; font-weight: 700; font-size: 13px; }
+        .badge.bronze\ medal { background: linear-gradient(135deg, #CD7F32, #A0522D); color: white; font-weight: 700; font-size: 13px; }
         .badge.gold\ scholar { background: linear-gradient(135deg, #FFD700, #FFA500); color: white; }
         .badge.silver\ scholar { background: linear-gradient(135deg, #C0C0C0, #A8A8A8); color: white; }
         .badge.bronze\ scholar { background: linear-gradient(135deg, #CD7F32, #A0522D); color: white; }
@@ -561,6 +564,16 @@
                     const badges = (data.badges || []).filter(badge => badge !== 'Bronze Scholar');
                     console.log(`📊 Rendering rank ${rank}:`, { displayName: data.displayName, points: score, badges: badges, allBadges: data.badges, dataObj: data });
 
+                    // Add rank-based badges (only for top 3)
+                    let rankBadges = [...badges];
+                    if (rank === 1) {
+                        rankBadges.unshift('🥇 Gold Medal');
+                    } else if (rank === 2) {
+                        rankBadges.unshift('🥈 Silver Medal');
+                    } else if (rank === 3) {
+                        rankBadges.unshift('🥉 Bronze Medal');
+                    }
+
                     // For overall leaderboard, show breakdown
                     let scoreDisplay = `${score} pts`;
                     if (type === 'overall' && data.ladderPoints !== undefined && data.speedPoints !== undefined) {
@@ -568,9 +581,9 @@
                     }
 
                     // Create badge elements with proper class handling
-                    const badgeHTML = badges.map(badge => {
+                    const badgeHTML = rankBadges.map(badge => {
                         // Convert badge name to CSS class (lowercase and keep spaces)
-                        const badgeClass = badge.toLowerCase();
+                        const badgeClass = badge.toLowerCase().replace(/[^a-z0-9\s]/g, '');
                         return `<span class="badge ${badgeClass}" title="${badge}">${badge}</span>`;
                     }).join('');
 
