@@ -1029,22 +1029,21 @@
                 streak++;
                 bestStreak = Math.max(bestStreak, streak);
 
-                // Calculate points: base points + speed bonus + remaining time bonus + streak bonus
+                // Calculate points: base points + time bonus (remaining time) + streak bonus
                 const basePoints = 100;
-                // Speed bonus: reward for answering quickly relative to time limit
-                const timeSpeedFactor = Math.max(0, 1 - (timeTaken / settings.timeLimit));
-                const speedBonus = Math.round(timeSpeedFactor * settings.timeBonus);
                 
-                // Remaining time bonus: extra reward for time left on the clock
+                // Time bonus: reward based on remaining time (faster answers = more time left = more bonus)
                 const remainingTime = Math.max(0, timeLeft);
-                const remainingTimeBonus = Math.round((remainingTime / settings.timeLimit) * 20);
+                const timeBonusPercentage = remainingTime / difficultySettings[currentDifficulty].timeLimit;
+                const timeBonus = Math.round(timeBonusPercentage * 50); // Max 50 points bonus
                 
-                const streakBonus = Math.floor(streak / 3) * 50; // Bonus every 3 correct answers
+                // Streak bonus: 50 points for every 3 correct answers
+                const streakBonus = Math.floor(streak / 3) * 50;
 
-                const totalPoints = basePoints + speedBonus + remainingTimeBonus + streakBonus;
+                const totalPoints = basePoints + timeBonus + streakBonus;
                 score += totalPoints;
 
-                showFeedback(true, `🎉 Tama! +${totalPoints} puntos (${basePoints} base + ${speedBonus} speed + ${remainingTimeBonus} time remaining + ${streakBonus} streak)`);
+                showFeedback(true, `🎉 Tama! +${totalPoints} puntos (${basePoints} base + ${timeBonus} time + ${streakBonus} streak)`);
             } else {
                 streak = 0;
                 showFeedback(false, '❌ Mali! Streak reset.');
