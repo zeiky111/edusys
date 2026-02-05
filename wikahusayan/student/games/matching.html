@@ -70,16 +70,16 @@ async function saveGameScore(userId, gameType, score, displayName = null, groupN
 
         console.log(`🔗 Matching score (accumulated): ${updateData.points}`);
 
-        // Initialize badges array if not existing
-        if (!existingData?.badges) {
-            updateData.badges = [];
-        }
+        // Initialize or preserve badges array
+        updateData.badges = existingData?.badges || [];
 
         // Check for new badges based on total points
         const newBadges = checkForNewBadges(updateData.totalPoints, existingData?.badges || []);
         if (newBadges.length > 0) {
-            updateData.badges = [...(existingData?.badges || []), ...newBadges];
+            updateData.badges = [...updateData.badges, ...newBadges];
             console.log('🏆 New badges earned:', newBadges);
+        } else {
+            console.log('📊 No new badges. Preserving existing:', updateData.badges);
         }
 
         if (docRef) {
