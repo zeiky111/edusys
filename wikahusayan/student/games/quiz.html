@@ -1029,13 +1029,19 @@
                 streak++;
                 bestStreak = Math.max(bestStreak, streak);
 
-                // Calculate points: only based on remaining time
-                const remainingTime = Math.max(0, timeLeft);
-                const totalPoints = remainingTime;
+                // Calculate points: base points + remaining time bonus + streak bonus
+                const basePoints = 100;
+                
+                // Time bonus: 1 point per second of remaining time
+                const timeBonus = Math.max(0, timeLeft);
+                
+                // Streak bonus: 50 points for every 3 correct answers
+                const streakBonus = Math.floor(streak / 3) * 50;
 
+                const totalPoints = basePoints + timeBonus + streakBonus;
                 score += totalPoints;
 
-                showFeedback(true, `🎉 Tama! +${totalPoints} puntos`);
+                showFeedback(true, `🎉 Tama! +${totalPoints} puntos (${basePoints} base + ${timeBonus} time + ${streakBonus} streak)`);
             } else {
                 streak = 0;
                 showFeedback(false, '❌ Mali! Streak reset.');
