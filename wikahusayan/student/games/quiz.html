@@ -1005,6 +1005,7 @@
         // Handle timeout
         function handleTimeout() {
             streak = 0;
+            document.getElementById('streak').textContent = streak;
             showFeedback(false, '⏰ Oras na ubos! Walang puntos.');
             setTimeout(() => {
                 currentQuestionIndex++;
@@ -1028,6 +1029,7 @@
                 correctAnswers++;
                 streak++;
                 bestStreak = Math.max(bestStreak, streak);
+                document.getElementById('streak').textContent = streak;
 
                 // Calculate points: base points + remaining time bonus + streak bonus
                 const basePoints = 100;
@@ -1044,6 +1046,7 @@
                 showFeedback(true, `🎉 Tama! +${totalPoints} puntos (${basePoints} base + ${timeBonus} time + ${streakBonus} streak)`);
             } else {
                 streak = 0;
+                document.getElementById('streak').textContent = streak;
                 showFeedback(false, '❌ Mali! Streak reset.');
             }
 
