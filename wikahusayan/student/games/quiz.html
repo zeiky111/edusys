@@ -1031,8 +1031,9 @@
 
                 // Calculate points: base points + time bonus (faster answers = more bonus) + streak bonus
                 const basePoints = 100;
-                // Time bonus: answer quickly to get more bonus (max bonus if answered in 1 second or less)
-                const timeSpeedFactor = Math.max(0, 1 - (timeTaken / (settings.timeLimit * 0.5)));
+                // Time bonus: reward based on speed relative to time limit
+                // Maximum bonus if answered within 1/3 of time limit, 0 bonus if time limit reached
+                const timeSpeedFactor = Math.max(0, 1 - (timeTaken / settings.timeLimit));
                 const timeBonus = Math.round(timeSpeedFactor * settings.timeBonus);
                 const streakBonus = Math.floor(streak / 3) * 50; // Bonus every 3 correct answers
 
