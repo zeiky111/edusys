@@ -264,6 +264,29 @@
             z-index: 2000;
         }
 
+        .popup-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 2000;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            pointer-events: none;
+        }
+
+        .popup-toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         .game-over-content {
             background: white;
             padding: 40px;
@@ -275,6 +298,7 @@
 <body>
     <div class="game-container">
         <button class="back-btn" onclick="window.location.href='select.html'">← Bumalik</button>
+        <div id="popup-toast" class="popup-toast"></div>
         
         <div class="score-display">
             <span id="score">0</span> pts
@@ -499,6 +523,25 @@
         let currentStep = 0;
         let score = 0;
         let gameStarted = false;
+        const totalSteps = 8;
+        const maxAttemptsPerStep = 3;
+        const tieBreakerStepIndex = 7; // ika-8 na hagdan
+        const tieBreakerAttempts = 1;
+        let attemptsLeft = Array(totalSteps).fill(maxAttemptsPerStep);
+        let popupTimer = null;
+
+        function showPopup(message) {
+            const toast = document.getElementById('popup-toast');
+            if (!toast) return;
+            toast.textContent = message;
+            toast.classList.add('show');
+            if (popupTimer) {
+                clearTimeout(popupTimer);
+            }
+            popupTimer = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
 
         // Questions database - will be loaded from Firebase
         let questions = [];
@@ -591,6 +634,23 @@
             console.log('Game started, hiding start button');
             document.getElementById('start-btn').style.display = 'none';
 
+            // Reset game state
+            currentStep = 0;
+            score = 0;
+            attemptsLeft = Array(totalSteps).fill(maxAttemptsPerStep);
+            attemptsLeft[tieBreakerStepIndex] = tieBreakerAttempts;
+
+            for (let i = 0; i < totalSteps; i++) {
+                const stepEl = document.getElementById(`step-${i}`);
+                if (stepEl) {
+                    stepEl.className = i === 0 ? 'step current' : 'step locked';
+                }
+            }
+
+            // Show attempts info for first step
+            const firstStepAttempts = attemptsLeft[0];
+            showPopup(`Attempts left: ${firstStepAttempts}`);
+
             // Automatically start the first quiz
             startQuiz(0);
         }
@@ -601,6 +661,17 @@
         function startQuiz(stepIndex) {
             console.log('startQuiz called with', stepIndex, 'gameStarted:', gameStarted, 'currentStep:', currentStep);
             if (!gameStarted || stepIndex !== currentStep) return;
+
+            if (attemptsLeft[stepIndex] <= 0) {
+                endGame();
+                return;
+            }
+
+            if (stepIndex === tieBreakerStepIndex) {
+                showPopup('Tie-breaker: 1 attempt only');
+            } else {
+                showPopup(`Attempts left: ${attemptsLeft[stepIndex]}`);
+            }
 
             const modal = document.getElementById('quiz-modal');
             const question = document.getElementById('question');
@@ -681,8 +752,18 @@
                 if (currentStep < 8) {
                     document.getElementById(`step-${currentStep}`).className = 'step current';
                     movePlayer(currentStep);
+                    const nextAttempts = attemptsLeft[currentStep];
+                    showPopup(`Attempts left: ${nextAttempts}`);
                 } else {
                     endGame();
+                }
+            } else {
+                attemptsLeft[stepIndex] -= 1;
+                if (attemptsLeft[stepIndex] <= 0) {
+                    showPopup('Wala nang attempts. Game over.');
+                    endGame();
+                } else {
+                    showPopup(`Attempts left: ${attemptsLeft[stepIndex]}`);
                 }
             }
 
