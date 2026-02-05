@@ -420,21 +420,14 @@
             try {
                 console.log(`🔄 Updating leaderboard for ${gameType} with score: ${score}`);
 
-                // Use separate collection for ladder quiz
+                // Use deterministic document ID (userId) for ladder quiz
                 const leaderboardRef = collection(db, 'leaderboard_ladder');
-                const q = query(leaderboardRef, where('userId', '==', userId));
-                const querySnapshot = await getDocs(q);
-
-                let existingData = null;
-                let docRef = null;
-
-                if (!querySnapshot.empty) {
-                    // Update existing player
-                    docRef = querySnapshot.docs[0].ref;
-                    existingData = querySnapshot.docs[0].data();
+                const docRef = doc(db, 'leaderboard_ladder', userId);
+                const existingSnap = await getDoc(docRef);
+                const existingData = existingSnap.exists() ? existingSnap.data() : null;
+                if (existingData) {
                     console.log('📝 Updating existing player:', existingData.displayName);
                 } else {
-                    // Create new player entry
                     console.log('🆕 Creating new player entry');
                 }
 
@@ -464,14 +457,10 @@
                     console.log('🏆 New badges earned:', newBadges);
                 }
 
-                if (docRef) {
-                    // Update existing document
-                    await updateDoc(docRef, updateData);
-                } else {
-                    // Create new document
+                if (!existingData) {
                     updateData.createdAt = new Date();
-                    await addDoc(leaderboardRef, updateData);
                 }
+                await setDoc(docRef, updateData, { merge: true });
 
                 // Also keep a per-user aggregated points document for other parts of the app
                 try {
@@ -744,6 +733,9 @@
                 score += 20;
                 animateScore();
 
+                // Save current progress so leaderboard can update
+                saveScoreToFirebase(score);
+
                 // Mark current step as completed
                 document.getElementById(`step-${stepIndex}`).className = 'step completed';
 
@@ -811,9 +803,11 @@
                 await saveGameScore(userId, 'ladder_quiz', finalScore, displayName, groupName);
 
                 console.log('✅ Ladder quiz score saved to leaderboard:', finalScore);
+                showPopup('Na-save na ang score sa leaderboard ✅');
             } catch (error) {
                 console.error('❌ Error saving ladder quiz score:', error);
                 console.error('❌ Error details:', error.message);
+                showPopup('Hindi na-save ang score ⚠️');
             }
         }
 

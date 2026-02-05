@@ -596,10 +596,6 @@
                         <div class="score-label">Puntos</div>
                         <div class="score-value" id="score">0</div>
                     </div>
-                    <div class="streak-display">
-                        <div class="streak-label">Streak</div>
-                        <div class="streak-value" id="streak">0</div>
-                    </div>
                 </div>
             </div>
 
@@ -947,7 +943,7 @@
             document.getElementById('question-number').textContent = `Tanong ${currentQuestionIndex + 1} ng ${totalQuestions}`;
             document.getElementById('question').textContent = question.question;
             document.getElementById('score').textContent = score;
-            document.getElementById('streak').textContent = streak;
+            updateStreakUI();
             document.getElementById('feedback').classList.add('hidden');
 
             // Create options
@@ -1005,7 +1001,7 @@
         // Handle timeout
         function handleTimeout() {
             streak = 0;
-            document.getElementById('streak').textContent = streak;
+            updateStreakUI();
             showFeedback(false, '⏰ Oras na ubos! Walang puntos.');
             setTimeout(() => {
                 currentQuestionIndex++;
@@ -1029,7 +1025,7 @@
                 correctAnswers++;
                 streak++;
                 bestStreak = Math.max(bestStreak, streak);
-                document.getElementById('streak').textContent = streak;
+                updateStreakUI();
 
                 // Calculate points: base points + remaining time bonus + streak bonus
                 const basePoints = 100;
@@ -1043,11 +1039,11 @@
                 const totalPoints = basePoints + timeBonus + streakBonus;
                 score += totalPoints;
 
-                showFeedback(true, `🎉 Tama! +${totalPoints} puntos (${basePoints} base + ${timeBonus} time + ${streakBonus} streak)`);
+                showFeedback(true, `🎉 Tama! +${totalPoints} puntos (${basePoints} base + ${timeBonus} time + ${streakBonus} bonus)`);
             } else {
                 streak = 0;
-                document.getElementById('streak').textContent = streak;
-                showFeedback(false, '❌ Mali! Streak reset.');
+                updateStreakUI();
+                showFeedback(false, '❌ Mali!');
             }
 
             // Highlight correct/incorrect answers
@@ -1073,6 +1069,14 @@
             feedback.textContent = message;
             feedback.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
             feedback.classList.remove('hidden');
+        }
+
+        // Update streak display if it exists
+        function updateStreakUI() {
+            const streakEl = document.getElementById('streak');
+            if (streakEl) {
+                streakEl.textContent = streak;
+            }
         }
 
         // End game
