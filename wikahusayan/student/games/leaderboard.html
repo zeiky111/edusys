@@ -464,7 +464,10 @@
                 console.log(`📊 Final sorted ${type} docs:`, filteredDocs.map(d => ({ userId: d.data.userId || d.userId, points: d.sortValue, displayName: d.data.displayName })));
 
                 let rank = 1;
-                filteredDocs.forEach(({ doc, data, userId }) => {
+                filteredDocs.forEach((item) => {
+                    const data = item.data;
+                    const userId = item.userId || (data && data.userId);
+                    
                     const isCurrentUser = currentUser && (
                         (data && data.userId === currentUser.uid) ||
                         (userId && userId === currentUser.uid)
@@ -476,8 +479,9 @@
                         row.style.borderLeft = '4px solid #667eea';
                     }
 
-                    const score = data.sortValue || data.totalPoints || data.points || 0;
+                    const score = item.sortValue || data.totalPoints || data.points || 0;
                     const badges = (data.badges || []).filter(badge => badge !== 'Bronze Scholar');
+                    console.log(`📊 Rendering rank ${rank}:`, { displayName: data.displayName, points: score, badges: badges, allBadges: data.badges });
 
                     // For overall leaderboard, show breakdown
                     let scoreDisplay = `${score} pts`;
