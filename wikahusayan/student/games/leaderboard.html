@@ -164,6 +164,15 @@
         .badge.bronze { background: linear-gradient(135deg, #CD7F32, #A0522D); color: white; }
         .badge.master { background: linear-gradient(135deg, #FF6B6B, #EE5A24); color: white; }
         .badge.champion { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .badge.gold\ scholar { background: linear-gradient(135deg, #FFD700, #FFA500); color: white; }
+        .badge.silver\ scholar { background: linear-gradient(135deg, #C0C0C0, #A8A8A8); color: white; }
+        .badge.bronze\ scholar { background: linear-gradient(135deg, #CD7F32, #A0522D); color: white; }
+        .badge.quiz\ master { background: linear-gradient(135deg, #FF6B6B, #EE5A24); color: white; }
+        .badge.quiz\ champion { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .badge.speed\ master { background: linear-gradient(135deg, #00BCD4, #009688); color: white; }
+        .badge.speed\ champion { background: linear-gradient(135deg, #4CAF50, #388E3C); color: white; }
+        .badge.matching\ master { background: linear-gradient(135deg, #FF9800, #F57C00); color: white; }
+        .badge.matching\ champion { background: linear-gradient(135deg, #9C27B0, #7B1FA2); color: white; }
 
         .loading, .error, .no-data {
             text-align: center;
@@ -345,12 +354,16 @@
                                 speedPoints: 0,
                                 matchingPoints: 0,
                                 totalPoints: 0,
-                                badges: data.badges || []
+                                badges: []
                             });
                         }
                         const userData = userScores.get(userId);
                         userData.ladderPoints = data.points || 0;
                         userData.totalPoints += data.points || 0;
+                        // Merge badges - avoid duplicates
+                        if (data.badges && Array.isArray(data.badges)) {
+                            userData.badges = [...new Set([...userData.badges, ...data.badges])];
+                        }
                     });
 
                     // Add speed challenge scores
@@ -365,12 +378,16 @@
                                 speedPoints: 0,
                                 matchingPoints: 0,
                                 totalPoints: 0,
-                                badges: data.badges || []
+                                badges: []
                             });
                         }
                         const userData = userScores.get(userId);
                         userData.speedPoints = data.points || 0;
                         userData.totalPoints += data.points || 0;
+                        // Merge badges - avoid duplicates
+                        if (data.badges && Array.isArray(data.badges)) {
+                            userData.badges = [...new Set([...userData.badges, ...data.badges])];
+                        }
                     });
 
                     // Add drag & drop scores
@@ -385,12 +402,16 @@
                                 speedPoints: 0,
                                 matchingPoints: 0,
                                 totalPoints: 0,
-                                badges: data.badges || []
+                                badges: []
                             });
                         }
                         const userData = userScores.get(userId);
                         userData.matchingPoints = data.points || 0;
                         userData.totalPoints += data.points || 0;
+                        // Merge badges - avoid duplicates
+                        if (data.badges && Array.isArray(data.badges)) {
+                            userData.badges = [...new Set([...userData.badges, ...data.badges])];
+                        }
                     });
 
                     // Convert to array and include all users
@@ -464,6 +485,13 @@
                         scoreDisplay = `${score} pts (L:${data.ladderPoints} + S:${data.speedPoints})`;
                     }
 
+                    // Create badge elements with proper class handling
+                    const badgeHTML = badges.map(badge => {
+                        // Convert badge name to CSS class (lowercase and keep spaces)
+                        const badgeClass = badge.toLowerCase();
+                        return `<span class="badge ${badgeClass}" title="${badge}">${badge}</span>`;
+                    }).join('');
+
                     row.innerHTML = `
                         <td class="rank-cell rank-${rank <= 3 ? rank : ''}">#${rank}</td>
                         <td class="player-cell">
@@ -477,7 +505,7 @@
                         </td>
                         <td class="score-cell">${scoreDisplay}</td>
                         <td class="badges-cell">
-                            ${badges.map(badge => `<span class="badge ${badge.toLowerCase()}">${badge}</span>`).join('')}
+                            ${badgeHTML}
                         </td>
                     `;
 
