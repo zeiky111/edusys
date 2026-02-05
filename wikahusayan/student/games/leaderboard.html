@@ -445,7 +445,14 @@
                     querySnapshot.forEach((doc) => {
                         const data = doc.data();
                         const points = data.points || 0;
-                        console.log(`📊 ${type} doc:`, { id: doc.id, userId: data.userId, points, displayName: data.displayName });
+                        console.log(`📊 ${type} doc:`, { 
+                            id: doc.id, 
+                            userId: data.userId, 
+                            points, 
+                            displayName: data.displayName,
+                            badges: data.badges,
+                            allData: data
+                        });
                         filteredDocs.push({
                             doc,
                             data,
@@ -454,6 +461,7 @@
                     });
 
                     console.log(`📊 ${type} filtered docs:`, filteredDocs.length);
+                    console.log(`📊 ${type} all documents:`, filteredDocs.map(d => ({ userId: d.data.userId, displayName: d.data.displayName, badges: d.data.badges })));
                 }
 
                 tbody.innerHTML = '';
