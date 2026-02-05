@@ -758,12 +758,12 @@
             const newBadges = [];
 
             const badgeThresholds = [
-                { points: 100, badge: 'Bronze Scholar' },
-                { points: 250, badge: 'Silver Scholar' },
-                { points: 500, badge: 'Gold Scholar' },
-                { points: 1000, badge: 'Platinum Scholar' },
-                { points: 2000, badge: 'Diamond Scholar' },
-                { points: 5000, badge: 'Master Scholar' }
+                { points: 20, badge: 'Bronze Scholar' },
+                { points: 50, badge: 'Silver Scholar' },
+                { points: 100, badge: 'Gold Scholar' },
+                { points: 200, badge: 'Platinum Scholar' },
+                { points: 500, badge: 'Diamond Scholar' },
+                { points: 1000, badge: 'Master Scholar' }
             ];
 
             badgeThresholds.forEach(({ points, badge }) => {
@@ -773,11 +773,11 @@
             });
 
             // Special badges for game types
-            if (totalPoints >= 100 && !existingBadges.includes('First Steps')) {
+            if (totalPoints >= 20 && !existingBadges.includes('First Steps')) {
                 newBadges.push('First Steps');
             }
 
-            if (totalPoints >= 500 && !existingBadges.includes('Knowledge Seeker')) {
+            if (totalPoints >= 100 && !existingBadges.includes('Knowledge Seeker')) {
                 newBadges.push('Knowledge Seeker');
             }
 
