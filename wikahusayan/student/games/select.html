@@ -525,6 +525,10 @@ async function loadOverallLeaderboard() {
     topPlayers.forEach((data) => {
       console.log('🔍 DEBUG: Processing overall leaderboard entry:', data);
       const isCurrentUser = currentUser && data.userId === currentUser.uid;
+      
+      // Filter out Bronze Scholar badges to match full leaderboard
+      const filteredBadges = (data.badges || []).filter(badge => badge !== 'Bronze Scholar');
+      
       const item = document.createElement('div');
       item.className = `leaderboard-item ${isCurrentUser ? 'current-user' : ''}`;
       item.innerHTML = `
@@ -538,8 +542,8 @@ async function loadOverallLeaderboard() {
         </div>
         <div class="player-score">${data.totalPoints || 0} pts</div>
         <div class="player-badges">
-          ${(data.badges || []).slice(0, 2).map(badge => `<span class="badge-mini" data-badge="${badge}" title="${badge}">${badge}</span>`).join('')}
-          ${(data.badges || []).length > 2 ? `<span class="badge-more" title="Has ${(data.badges || []).length - 2} more badges">+${(data.badges || []).length - 2}</span>` : ''}
+          ${filteredBadges.slice(0, 2).map(badge => `<span class="badge-mini" data-badge="${badge}" title="${badge}">${badge}</span>`).join('')}
+          ${filteredBadges.length > 2 ? `<span class="badge-more" title="Has ${filteredBadges.length - 2} more badges">+${filteredBadges.length - 2}</span>` : ''}
         </div>
       `;
       container.appendChild(item);
@@ -590,6 +594,10 @@ async function loadMatchingLeaderboard() {
     topPlayers.forEach((data) => {
       console.log('🔍 DEBUG: Processing matching leaderboard entry:', data.id, data);
       const isCurrentUser = currentUser && data.userId === currentUser.uid;
+      
+      // Filter out Bronze Scholar badges to match full leaderboard
+      const filteredBadges = (data.badges || []).filter(badge => badge !== 'Bronze Scholar');
+      
       const item = document.createElement('div');
       item.className = `leaderboard-item ${isCurrentUser ? 'current-user' : ''}`;
       item.innerHTML = `
@@ -603,8 +611,8 @@ async function loadMatchingLeaderboard() {
         </div>
         <div class="player-score">${data.points || 0} pts</div>
         <div class="player-badges">
-          ${(data.badges || []).slice(0, 2).map(badge => `<span class="badge-mini">${badge}</span>`).join('')}
-          ${(data.badges || []).length > 2 ? `<span class="badge-more">+${(data.badges || []).length - 2}</span>` : ''}
+          ${filteredBadges.slice(0, 2).map(badge => `<span class="badge-mini" data-badge="${badge}" title="${badge}">${badge}</span>`).join('')}
+          ${filteredBadges.length > 2 ? `<span class="badge-more" title="Has ${filteredBadges.length - 2} more badges">+${filteredBadges.length - 2}</span>` : ''}
         </div>
       `;
       container.appendChild(item);
