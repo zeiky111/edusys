@@ -526,8 +526,26 @@ async function loadOverallLeaderboard() {
       console.log('🔍 DEBUG: Processing overall leaderboard entry:', data);
       const isCurrentUser = currentUser && data.userId === currentUser.uid;
       
-      // Filter out Bronze Scholar badges to match full leaderboard
-      const filteredBadges = (data.badges || []).filter(badge => badge !== 'Bronze Scholar');
+      // Assign badges based on RANK ONLY
+      // Top 1: Gold Scholar, Top 2: Silver Scholar, Top 3: Bronze Scholar, Top 4+: No Scholar badges
+      let badges = data.badges || [];
+      let rankedBadges = [];
+      
+      // Get achievement badges (non-Scholar badges)
+      const achievementBadges = badges.filter(b => !['Gold Scholar', 'Silver Scholar', 'Bronze Scholar'].includes(b));
+      
+      // Add rank-based Scholar badge
+      if (rank === 1) {
+        rankedBadges.push('Gold Scholar');
+      } else if (rank === 2) {
+        rankedBadges.push('Silver Scholar');
+      } else if (rank === 3) {
+        rankedBadges.push('Bronze Scholar');
+      }
+      // Rank 4+ gets NO Scholar badge
+      
+      // Combine rank badge with achievement badges
+      const filteredBadges = [...rankedBadges, ...achievementBadges];
       
       const item = document.createElement('div');
       item.className = `leaderboard-item ${isCurrentUser ? 'current-user' : ''}`;
@@ -595,8 +613,26 @@ async function loadMatchingLeaderboard() {
       console.log('🔍 DEBUG: Processing matching leaderboard entry:', data.id, data);
       const isCurrentUser = currentUser && data.userId === currentUser.uid;
       
-      // Filter out Bronze Scholar badges to match full leaderboard
-      const filteredBadges = (data.badges || []).filter(badge => badge !== 'Bronze Scholar');
+      // Assign badges based on RANK ONLY
+      // Top 1: Gold Scholar, Top 2: Silver Scholar, Top 3: Bronze Scholar, Top 4+: No Scholar badges
+      let badges = data.badges || [];
+      let rankedBadges = [];
+      
+      // Get achievement badges (non-Scholar badges)
+      const achievementBadges = badges.filter(b => !['Gold Scholar', 'Silver Scholar', 'Bronze Scholar'].includes(b));
+      
+      // Add rank-based Scholar badge
+      if (rank === 1) {
+        rankedBadges.push('Gold Scholar');
+      } else if (rank === 2) {
+        rankedBadges.push('Silver Scholar');
+      } else if (rank === 3) {
+        rankedBadges.push('Bronze Scholar');
+      }
+      // Rank 4+ gets NO Scholar badge
+      
+      // Combine rank badge with achievement badges
+      const filteredBadges = [...rankedBadges, ...achievementBadges];
       
       const item = document.createElement('div');
       item.className = `leaderboard-item ${isCurrentUser ? 'current-user' : ''}`;

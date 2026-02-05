@@ -128,27 +128,21 @@ async function saveGameScore(userId, gameType, score, displayName = null, groupN
 function checkForNewBadges(totalPoints, existingBadges) {
     const newBadges = [];
 
-    const badgeThresholds = [
-        { points: 20, badge: 'Bronze Scholar' },
-        { points: 50, badge: 'Silver Scholar' },
-        { points: 100, badge: 'Gold Scholar' },
-        { points: 200, badge: 'Platinum Scholar' },
-        { points: 500, badge: 'Diamond Scholar' },
-        { points: 1000, badge: 'Master Scholar' }
-    ];
-
-    badgeThresholds.forEach(({ points, badge }) => {
-        if (totalPoints >= points && !existingBadges.includes(badge)) {
+    // Keep existing achievement badges (Scholar badges assigned by leaderboard based on rank)
+    const achievementBadges = (existingBadges || []).filter(b => !['Gold Scholar', 'Silver Scholar', 'Bronze Scholar'].includes(b));
+    
+    achievementBadges.forEach(badge => {
+        if (!newBadges.includes(badge)) {
             newBadges.push(badge);
         }
     });
 
-    // Special badges for game types
-    if (totalPoints >= 20 && !existingBadges.includes('First Steps')) {
+    // Add new achievement badges only
+    if (totalPoints >= 20 && !newBadges.includes('First Steps')) {
         newBadges.push('First Steps');
     }
 
-    if (totalPoints >= 100 && !existingBadges.includes('Knowledge Seeker')) {
+    if (totalPoints >= 100 && !newBadges.includes('Knowledge Seeker')) {
         newBadges.push('Knowledge Seeker');
     }
 

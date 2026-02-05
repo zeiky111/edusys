@@ -164,9 +164,6 @@
         .badge.bronze { background: linear-gradient(135deg, #CD7F32, #A0522D); color: white; }
         .badge.master { background: linear-gradient(135deg, #FF6B6B, #EE5A24); color: white; }
         .badge.champion { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
-        .badge.gold\ medal { background: linear-gradient(135deg, #FFD700, #FFA500); color: white; font-weight: 700; font-size: 13px; }
-        .badge.silver\ medal { background: linear-gradient(135deg, #C0C0C0, #A8A8A8); color: white; font-weight: 700; font-size: 13px; }
-        .badge.bronze\ medal { background: linear-gradient(135deg, #CD7F32, #A0522D); color: white; font-weight: 700; font-size: 13px; }
         .badge.gold\ scholar { background: linear-gradient(135deg, #FFD700, #FFA500); color: white; }
         .badge.silver\ scholar { background: linear-gradient(135deg, #C0C0C0, #A8A8A8); color: white; }
         .badge.bronze\ scholar { background: linear-gradient(135deg, #CD7F32, #A0522D); color: white; }
@@ -299,26 +296,37 @@
         // Badge checking function
         function checkForNewBadges(totalPoints, existingBadges = []) {
             const newBadges = [];
-            const badgeThresholds = [
-                { points: 20, badge: 'Bronze Scholar' },
-                { points: 50, badge: 'Silver Scholar' },
-                { points: 100, badge: 'Gold Scholar' },
-                { points: 200, badge: 'Platinum Scholar' },
-                { points: 500, badge: 'Diamond Scholar' },
-                { points: 1000, badge: 'Master Scholar' }
-            ];
 
-            badgeThresholds.forEach(({ points, badge }) => {
-                if (totalPoints >= points && !existingBadges.includes(badge)) {
+            // Only ONE Scholar badge - keep the highest earned
+            let scholarBadge = null;
+            if (totalPoints >= 100) {
+                scholarBadge = 'Gold Scholar';
+            } else if (totalPoints >= 50) {
+                scholarBadge = 'Silver Scholar';
+            } else if (totalPoints >= 20) {
+                scholarBadge = 'Bronze Scholar';
+            }
+
+            // Remove old Scholar badges and add new one
+            const filteredExisting = existingBadges.filter(b => !['Gold Scholar', 'Silver Scholar', 'Bronze Scholar'].includes(b));
+            
+            if (scholarBadge && !filteredExisting.includes(scholarBadge)) {
+                newBadges.push(scholarBadge);
+            }
+
+            // Keep existing achievement badges
+            filteredExisting.forEach(badge => {
+                if (!newBadges.includes(badge)) {
                     newBadges.push(badge);
                 }
             });
 
-            if (totalPoints >= 20 && !existingBadges.includes('First Steps')) {
+            // Add new achievement badges
+            if (totalPoints >= 20 && !newBadges.includes('First Steps')) {
                 newBadges.push('First Steps');
             }
 
-            if (totalPoints >= 100 && !existingBadges.includes('Knowledge Seeker')) {
+            if (totalPoints >= 100 && !newBadges.includes('Knowledge Seeker')) {
                 newBadges.push('Knowledge Seeker');
             }
 
@@ -561,18 +569,29 @@
                     }
 
                     const score = item.sortValue || data.totalPoints || data.points || 0;
-                    const badges = (data.badges || []).filter(badge => badge !== 'Bronze Scholar');
-                    console.log(`📊 Rendering rank ${rank}:`, { displayName: data.displayName, points: score, badges: badges, allBadges: data.badges, dataObj: data });
-
-                    // Add rank-based badges (only for top 3)
-                    let rankBadges = [...badges];
+                    
+                    // Assign badges based on RANK ONLY
+                    // Top 1: Gold Scholar, Top 2: Silver Scholar, Top 3: Bronze Scholar, Top 4+: No Scholar badges
+                    let badges = data.badges || [];
+                    let rankedBadges = [];
+                    
+                    // Get achievement badges (non-Scholar badges)
+                    const achievementBadges = badges.filter(b => !['Gold Scholar', 'Silver Scholar', 'Bronze Scholar'].includes(b));
+                    
+                    // Add rank-based Scholar badge
                     if (rank === 1) {
-                        rankBadges.unshift('🥇 Gold Medal');
+                        rankedBadges.push('Gold Scholar');
                     } else if (rank === 2) {
-                        rankBadges.unshift('🥈 Silver Medal');
+                        rankedBadges.push('Silver Scholar');
                     } else if (rank === 3) {
-                        rankBadges.unshift('🥉 Bronze Medal');
+                        rankedBadges.push('Bronze Scholar');
                     }
+                    // Rank 4+ gets NO Scholar badge
+                    
+                    // Combine rank badge with achievement badges
+                    const displayBadges = [...rankedBadges, ...achievementBadges];
+                    
+                    console.log(`📊 Rendering rank ${rank}:`, { displayName: data.displayName, points: score, displayBadges: displayBadges, originalBadges: badges });
 
                     // For overall leaderboard, show breakdown
                     let scoreDisplay = `${score} pts`;
@@ -581,9 +600,9 @@
                     }
 
                     // Create badge elements with proper class handling
-                    const badgeHTML = rankBadges.map(badge => {
+                    const badgeHTML = displayBadges.map(badge => {
                         // Convert badge name to CSS class (lowercase and keep spaces)
-                        const badgeClass = badge.toLowerCase().replace(/[^a-z0-9\s]/g, '');
+                        const badgeClass = badge.toLowerCase();
                         return `<span class="badge ${badgeClass}" title="${badge}">${badge}</span>`;
                     }).join('');
 

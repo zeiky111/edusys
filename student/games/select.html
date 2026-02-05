@@ -467,6 +467,28 @@ async function loadOverallLeaderboard() {
     topPlayers.forEach((data) => {
       console.log('🔍 DEBUG: Processing overall leaderboard entry:', data);
       const isCurrentUser = currentUser && data.userId === currentUser.uid;
+      
+      // Assign badges based on RANK ONLY
+      // Top 1: Gold Scholar, Top 2: Silver Scholar, Top 3: Bronze Scholar, Top 4+: No Scholar badges
+      let badges = data.badges || [];
+      let rankedBadges = [];
+      
+      // Get achievement badges (non-Scholar badges)
+      const achievementBadges = badges.filter(b => !['Gold Scholar', 'Silver Scholar', 'Bronze Scholar'].includes(b));
+      
+      // Add rank-based Scholar badge
+      if (rank === 1) {
+        rankedBadges.push('Gold Scholar');
+      } else if (rank === 2) {
+        rankedBadges.push('Silver Scholar');
+      } else if (rank === 3) {
+        rankedBadges.push('Bronze Scholar');
+      }
+      // Rank 4+ gets NO Scholar badge
+      
+      // Combine rank badge with achievement badges
+      const filteredBadges = [...rankedBadges, ...achievementBadges];
+      
       const item = document.createElement('div');
       item.className = `leaderboard-item ${isCurrentUser ? 'current-user' : ''}`;
       item.innerHTML = `
@@ -480,8 +502,8 @@ async function loadOverallLeaderboard() {
         </div>
         <div class="player-score">${data.totalPoints || 0} pts</div>
         <div class="player-badges">
-          ${(data.badges || []).slice(0, 2).map(badge => `<span class="badge-mini">${badge}</span>`).join('')}
-          ${(data.badges || []).length > 2 ? `<span class="badge-more">+${(data.badges || []).length - 2}</span>` : ''}
+          ${filteredBadges.slice(0, 2).map(badge => `<span class="badge-mini">${badge}</span>`).join('')}
+          ${filteredBadges.length > 2 ? `<span class="badge-more">+${filteredBadges.length - 2}</span>` : ''}
         </div>
       `;
       container.appendChild(item);
@@ -520,6 +542,28 @@ async function loadMatchingLeaderboard() {
       const data = doc.data();
       console.log('🔍 DEBUG: Processing matching leaderboard entry:', doc.id, data);
       const isCurrentUser = currentUser && data.userId === currentUser.uid;
+      
+      // Assign badges based on RANK ONLY
+      // Top 1: Gold Scholar, Top 2: Silver Scholar, Top 3: Bronze Scholar, Top 4+: No Scholar badges
+      let badges = data.badges || [];
+      let rankedBadges = [];
+      
+      // Get achievement badges (non-Scholar badges)
+      const achievementBadges = badges.filter(b => !['Gold Scholar', 'Silver Scholar', 'Bronze Scholar'].includes(b));
+      
+      // Add rank-based Scholar badge
+      if (rank === 1) {
+        rankedBadges.push('Gold Scholar');
+      } else if (rank === 2) {
+        rankedBadges.push('Silver Scholar');
+      } else if (rank === 3) {
+        rankedBadges.push('Bronze Scholar');
+      }
+      // Rank 4+ gets NO Scholar badge
+      
+      // Combine rank badge with achievement badges
+      const filteredBadges = [...rankedBadges, ...achievementBadges];
+      
       const item = document.createElement('div');
       item.className = `leaderboard-item ${isCurrentUser ? 'current-user' : ''}`;
       item.innerHTML = `
@@ -533,8 +577,8 @@ async function loadMatchingLeaderboard() {
         </div>
         <div class="player-score">${data.points || 0} pts</div>
         <div class="player-badges">
-          ${(data.badges || []).slice(0, 2).map(badge => `<span class="badge-mini">${badge}</span>`).join('')}
-          ${(data.badges || []).length > 2 ? `<span class="badge-more">+${(data.badges || []).length - 2}</span>` : ''}
+          ${filteredBadges.slice(0, 2).map(badge => `<span class="badge-mini">${badge}</span>`).join('')}
+          ${filteredBadges.length > 2 ? `<span class="badge-more">+${filteredBadges.length - 2}</span>` : ''}
         </div>
       `;
       container.appendChild(item);
