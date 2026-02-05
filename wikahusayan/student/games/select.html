@@ -227,6 +227,26 @@
   white-space: nowrap;
 }
 
+.badge-mini[data-badge*="Gold"] {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+}
+
+.badge-mini[data-badge*="Silver"] {
+  background: linear-gradient(135deg, #C0C0C0, #A8A8A8);
+}
+
+.badge-mini[data-badge*="Bronze"] {
+  background: linear-gradient(135deg, #CD7F32, #A0522D);
+}
+
+.badge-mini[data-badge*="Master"] {
+  background: linear-gradient(135deg, #FF6B6B, #EE5A24);
+}
+
+.badge-mini[data-badge*="Champion"] {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
 .badge-more {
   background: #666;
   color: white;
@@ -399,6 +419,10 @@ async function loadOverallLeaderboard() {
     const speedRef = collection(db, 'leaderboard_speed_challenge');
     const speedSnap = await getDocs(speedRef);
 
+    // Get all players from drag & drop
+    const matchingRef = collection(db, 'leaderboard_drag_drop');
+    const matchingSnap = await getDocs(matchingRef);
+
     // Combine and aggregate scores
     const playerMap = new Map();
 
@@ -413,13 +437,18 @@ async function loadOverallLeaderboard() {
           groupName: data.groupName || 'No Group',
           ladderPoints: data.points || 0,
           quizPoints: 0,
+          matchingPoints: 0,
           totalPoints: data.points || 0,
           badges: data.badges || []
         });
       } else {
         const existing = playerMap.get(userId);
         existing.ladderPoints = Math.max(existing.ladderPoints, data.points || 0);
-        existing.totalPoints = existing.ladderPoints + existing.quizPoints;
+        existing.totalPoints = existing.ladderPoints + existing.quizPoints + existing.matchingPoints;
+        // Merge badges
+        if (data.badges && Array.isArray(data.badges)) {
+          existing.badges = [...new Set([...existing.badges, ...data.badges])];
+        }
       }
     });
 
@@ -434,13 +463,44 @@ async function loadOverallLeaderboard() {
           groupName: data.groupName || 'No Group',
           ladderPoints: 0,
           quizPoints: data.points || 0,
+          matchingPoints: 0,
           totalPoints: data.points || 0,
           badges: data.badges || []
         });
       } else {
         const existing = playerMap.get(userId);
         existing.quizPoints = Math.max(existing.quizPoints, data.points || 0);
-        existing.totalPoints = existing.ladderPoints + existing.quizPoints;
+        existing.totalPoints = existing.ladderPoints + existing.quizPoints + existing.matchingPoints;
+        // Merge badges
+        if (data.badges && Array.isArray(data.badges)) {
+          existing.badges = [...new Set([...existing.badges, ...data.badges])];
+        }
+      }
+    });
+
+    // Process drag & drop scores
+    matchingSnap.forEach(doc => {
+      const data = doc.data();
+      const userId = data.userId;
+      if (!playerMap.has(userId)) {
+        playerMap.set(userId, {
+          userId,
+          displayName: data.displayName || 'Anonymous',
+          groupName: data.groupName || 'No Group',
+          ladderPoints: 0,
+          quizPoints: 0,
+          matchingPoints: data.points || 0,
+          totalPoints: data.points || 0,
+          badges: data.badges || []
+        });
+      } else {
+        const existing = playerMap.get(userId);
+        existing.matchingPoints = Math.max(existing.matchingPoints, data.points || 0);
+        existing.totalPoints = existing.ladderPoints + existing.quizPoints + existing.matchingPoints;
+        // Merge badges
+        if (data.badges && Array.isArray(data.badges)) {
+          existing.badges = [...new Set([...existing.badges, ...data.badges])];
+        }
       }
     });
 
@@ -478,8 +538,8 @@ async function loadOverallLeaderboard() {
         </div>
         <div class="player-score">${data.totalPoints || 0} pts</div>
         <div class="player-badges">
-          ${(data.badges || []).slice(0, 2).map(badge => `<span class="badge-mini">${badge}</span>`).join('')}
-          ${(data.badges || []).length > 2 ? `<span class="badge-more">+${(data.badges || []).length - 2}</span>` : ''}
+          ${(data.badges || []).slice(0, 2).map(badge => `<span class="badge-mini" data-badge="${badge}" title="${badge}">${badge}</span>`).join('')}
+          ${(data.badges || []).length > 2 ? `<span class="badge-more" title="Has ${(data.badges || []).length - 2} more badges">+${(data.badges || []).length - 2}</span>` : ''}
         </div>
       `;
       container.appendChild(item);
